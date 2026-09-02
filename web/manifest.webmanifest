@@ -1,0 +1,10 @@
+{
+  "name": "ソロエル",
+  "short_name": "ソロエル",
+  "description": "グループ集合試着エージェント",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f4f0",
+  "theme_color": "#6b4f8a",
+  "icons": []
+}

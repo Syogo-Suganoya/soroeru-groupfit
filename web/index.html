@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ソロエル — グループ集合試着</title>
+<link rel="manifest" href="/web/manifest.webmanifest" />
+<meta name="theme-color" content="#2a2540" />
+<style>
+  :root {
+    --bg: #f7f4f0; --panel: #ffffff; --ink: #2b2724; --sub: #7d766f;
+    --line: #e6e0d8; --accent: #6b4f8a; --warn: #b8622f; --block: #b03a3a; --ok: #4a7c59;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif; }
+  header { padding: 18px 20px; background: var(--accent); color: #fff; }
+  header h1 { margin: 0; font-size: 20px; letter-spacing: .04em; }
+  header p { margin: 4px 0 0; font-size: 13px; opacity: .85; }
+  main { max-width: 960px; margin: 0 auto; padding: 16px; display: grid; gap: 16px; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  h2 { margin: 0 0 12px; font-size: 15px; letter-spacing: .06em; color: var(--sub); }
+  label { display: block; font-size: 12px; color: var(--sub); margin: 8px 0 4px; }
+  input, select { width: 100%; padding: 9px 10px; border: 1px solid var(--line);
+    border-radius: 8px; font-size: 14px; background: #fff; color: inherit; }
+  button { padding: 9px 14px; border: 0; border-radius: 8px; background: var(--accent);
+    color: #fff; font-size: 13px; cursor: pointer; }
+  button.ghost { background: #efeae4; color: var(--ink); }
+  button:disabled { opacity: .45; cursor: default; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+  .member { border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+  .member h3 { margin: 0 0 6px; font-size: 15px; }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px;
+    background: #efeae4; color: var(--sub); margin-right: 4px; }
+  .tag.ok { background: #e4efe7; color: var(--ok); }
+  .tag.no { background: #f2e5e5; color: var(--block); }
+  .tag.bell { background: var(--accent); color: #fff; }
+  .notif { border: 1px solid var(--line); border-left: 4px solid var(--accent);
+    border-radius: 0 8px 8px 0; padding: 10px 12px; margin-bottom: 8px; background: #fbf9fd; }
+  .notif.read { border-left-color: var(--line); background: #fafafa; opacity: .6; }
+  .notif p { margin: 0 0 4px; font-size: 13px; white-space: pre-wrap; }
+  .notif .meta { font-size: 11px; color: var(--sub); }
+  .swatch { display: inline-block; width: 14px; height: 14px; border-radius: 4px;
+    vertical-align: -2px; border: 1px solid rgba(0,0,0,.15); margin-right: 6px; }
+  .warn { border-left: 4px solid var(--warn); padding: 10px 12px; background: #fdf6f0;
+    border-radius: 0 8px 8px 0; margin-bottom: 8px; }
+  .warn.block { border-color: var(--block); background: #fbf1f1; }
+  .warn p { margin: 0 0 6px; font-size: 14px; }
+  .evidence { font-size: 12px; color: var(--sub); font-family: ui-monospace, monospace;
+    word-break: break-all; }
+  .preview img { width: 100%; border-radius: 10px; border: 1px solid var(--line); background:#fff; }
+  .muted { color: var(--sub); font-size: 13px; }
+  ul.log { list-style: none; padding: 0; margin: 0; max-height: 220px; overflow: auto; }
+  ul.log li { font-size: 12px; padding: 5px 0; border-bottom: 1px dashed var(--line);
+    font-family: ui-monospace, monospace; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ソロエル</h1>
+  <p>並んだときの見え方を、当日ではなく事前に。</p>
+</header>
+
+<main>
+  <section id="setup">
+    <h2>ルーム</h2>
+    <div class="row">
+      <div style="flex:1 1 200px">
+        <label for="title">イベント名</label>
+        <input id="title" value="友人の結婚式" />
+      </div>
+      <div style="flex:1 1 160px">
+        <label for="date">開催日</label>
+        <input id="date" type="date" />
+      </div>
+      <div style="flex:1 1 160px">
+        <label for="organizer">幹事の名前</label>
+        <input id="organizer" value="幹事" />
+      </div>
+      <div style="flex:1 1 200px">
+        <label for="dresscode">ドレスコード（自由記述）</label>
+        <input id="dresscode" value="白NG・ファーNG" />
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button id="btn-create">ルームを作成</button>
+      <input id="join-room" placeholder="既存のルームID" style="flex:1 1 200px" />
+      <button class="ghost" id="btn-open">開く</button>
+    </div>
+    <p class="muted" id="room-meta"></p>
+  </section>
+
+  <section id="preview-sec" hidden>
+    <h2>集合プレビュー <span class="muted" id="rev"></span></h2>
+    <div class="preview"><img id="preview-img" alt="集合プレビュー" /></div>
+    <p class="muted" id="consent-note"></p>
+    <div class="row" style="margin-top:12px">
+      <div style="flex:1 1 200px">
+        <label for="lighting">会場のライティング</label>
+        <select id="lighting">
+          <option value="none">指定なし</option>
+          <option value="garden_day">昼のガーデン</option>
+          <option value="hall_evening">ホテル宴会場（夜）</option>
+          <option value="chapel">チャペル</option>
+        </select>
+      </div>
+      <button class="ghost" id="btn-movie" style="align-self:flex-end">記念ムービーを作る</button>
+    </div>
+    <p class="muted" id="movie-note"></p>
+    <div id="movie-box" hidden style="margin-top:10px">
+      <img id="movie-img" alt="記念ムービー" style="width:100%;border-radius:10px;border:1px solid var(--line)" />
+      <video id="movie-video" controls style="width:100%;border-radius:10px" hidden></video>
+    </div>
+  </section>
+
+  <section id="harmony-sec" hidden>
+    <h2>調和チェック（判定根拠つき）</h2>
+    <div id="warnings"></div>
+    <p class="muted" id="summary"></p>
+  </section>
+
+  <section id="members-sec" hidden>
+    <h2>メンバー</h2>
+    <div class="row" style="margin-bottom:12px">
+      <input id="new-member" placeholder="参加者名" style="flex:1 1 180px" />
+      <button id="btn-join">参加させる</button>
+      <button class="ghost" id="btn-remind">未確定者にリマインド</button>
+    </div>
+    <div class="grid" id="members"></div>
+  </section>
+
+  <section id="notif-sec" hidden>
+    <h2>通知（エージェントからのお知らせ）</h2>
+    <div class="row" style="margin-bottom:12px">
+      <select id="notif-who" style="flex:1 1 200px"></select>
+      <button class="ghost" id="btn-read">すべて既読にする</button>
+    </div>
+    <div id="notifs"></div>
+  </section>
+
+  <section id="arrange-sec" hidden>
+    <h2>手配</h2>
+    <div id="arrange"></div>
+  </section>
+
+  <section id="audit-sec" hidden>
+    <h2>監査ログ（同意・合成・削除の証跡）</h2>
+    <ul class="log" id="audit"></ul>
+    <div class="row" style="margin-top:10px">
+      <button class="ghost" id="btn-audit">再読込</button>
+      <button class="ghost" id="btn-purge" style="color:var(--block)">ルームを完全削除</button>
+    </div>
+  </section>
+</main>
+
+<script>
+const api = (p, opt) => fetch(p, {headers: {'Content-Type': 'application/json'}, ...opt})
+  .then(async r => { const b = await r.json().catch(() => ({})); if (!r.ok) throw new Error(b.detail || r.status); return b; });
+
+let roomId = null, catalog = [];
+const $ = id => document.getElementById(id);
+
+function defaultDate() {
+  const d = new Date(); d.setMonth(d.getMonth() + 2);
+  return d.toISOString().slice(0, 10);
+}
+$('date').value = defaultDate();
+
+async function loadCatalog() { catalog = await api('/api/catalog'); }
+
+async function render(room) {
+  roomId = room.room_id;
+  location.hash = roomId;
+  $('room-meta').textContent =
+    `ルームID: ${room.room_id} ／ 状態: ${room.status} ／ 自動削除: ${room.ttl_at.slice(0,10)}`;
+
+  for (const id of ['preview-sec','harmony-sec','members-sec','notif-sec','audit-sec']) $(id).hidden = false;
+
+  if (room.preview_url) {
+    $('preview-img').src = room.preview_url + '&t=' + Date.now();
+    $('rev').textContent = `rev.${room.preview.revision} ／ 合成: ${room.preview.engine} ／ ${room.lighting_label}`;
+    const silhouette = room.members.filter(m => !m.composed_in_preview).map(m => m.display_name);
+    $('consent-note').textContent = silhouette.length
+      ? `未同意のためシルエット表示: ${silhouette.join('、')}`
+      : '全員が合成に同意しています。';
+  }
+
+  $('lighting').value = room.lighting;
+  $('btn-movie').disabled = !room.movie_available;
+  $('movie-note').textContent = room.movie
+    ? `記念ムービー: ${room.movie.engine} / ${room.movie.seconds}秒${room.movie.has_audio ? '（音声あり）' : '（音声なし）'}`
+    : (room.movie_blocked_reason || '全員の衣装が確定すると作成できます。');
+
+  $('movie-box').hidden = !room.movie_url;
+  if (room.movie_url) {
+    const isVideo = room.movie.content_type.startsWith('video/');
+    $('movie-img').hidden = isVideo;
+    $('movie-video').hidden = !isVideo;
+    const src = room.movie_url + '?t=' + Date.now();
+    if (isVideo) $('movie-video').src = src; else $('movie-img').src = src;
+  }
+
+  const warns = room.harmony.warnings || [];
+  $('warnings').innerHTML = warns.length ? warns.map(w => `
+    <div class="warn ${w.severity === 'block' ? 'block' : ''}">
+      <p>${w.message}</p>
+      <div class="evidence">${JSON.stringify(w.evidence)}</div>
+      ${w.suggestions?.length ? `<div class="evidence">対応案: ${w.suggestions.join(' / ')}</div>` : ''}
+    </div>`).join('') : '<p class="muted">かぶり・浮きは検出されていません。</p>';
+  $('summary').textContent = room.harmony.explanation || '';
+
+  $('members').innerHTML = room.members.map(m => `
+    <div class="member">
+      <h3>${m.display_name}${m.is_organizer ? ' <span class="tag">幹事</span>' : ''}${
+        m.unread_notifications ? ` <span class="tag bell">通知${m.unread_notifications}</span>` : ''}</h3>
+      <div>
+        <span class="tag ${m.consent_granted ? 'ok' : 'no'}">${m.consent_granted ? '合成同意ずみ' : '未同意'}</span>
+        <span class="tag">${m.state}</span>
+      </div>
+      <p class="muted">${m.selected_garment
+        ? `<span class="swatch" style="background:${m.selected_garment.primary_color_hex}"></span>${m.selected_garment.name}`
+        : '衣装未確定'}</p>
+      <div class="row">
+        <button data-consent="${m.uid}" data-granted="${!m.consent_granted}" class="ghost">
+          ${m.consent_granted ? '同意を撤回' : '合成に同意'}
+        </button>
+        <button data-tryon="${m.uid}" class="ghost">試着する</button>
+      </div>
+      <label>衣装を選ぶ</label>
+      <select data-select="${m.uid}">
+        <option value="">—</option>
+        ${catalog.map(g => `<option value="${g.garment_id}"
+          ${m.selected_garment?.garment_id === g.garment_id ? 'selected' : ''}>${g.name}（フォーマル度${g.formality}）</option>`).join('')}
+      </select>
+    </div>`).join('');
+
+  $('arrange-sec').hidden = !room.arrange;
+  if (room.arrange) {
+    $('arrange').innerHTML = room.arrange.items.map(i => {
+      const m = room.members.find(x => x.uid === i.member_uid);
+      return `<p>${m ? m.display_name : i.member_uid}: ${i.garment_name} — ¥${i.price_yen.toLocaleString()}
+        ${i.rental_url ? `<a href="${i.rental_url}" target="_blank" rel="noopener">レンタル</a>` : ''}</p>`;
+    }).join('') + room.arrange.reminders.map(r => `<p class="muted">${r}</p>`).join('');
+  }
+
+  await renderNotifications(room);
+  await loadAudit();
+}
+
+// 通知は宛先本人ぶんしか取得できないので、誰の画面として見るかを選ばせる
+async function renderNotifications(room) {
+  $('notif-sec').hidden = false;
+  const who = $('notif-who');
+  const keep = who.value;
+  who.innerHTML = room.members.map(m =>
+    `<option value="${m.uid}">${m.display_name}${m.unread_notifications ? `（未読${m.unread_notifications}）` : ''}</option>`).join('');
+  who.value = room.members.some(m => m.uid === keep) ? keep : room.members[0].uid;
+
+  const list = await api(`/api/rooms/${roomId}/members/${who.value}/notifications`);
+  $('notifs').innerHTML = list.length ? list.slice().reverse().map(n => `
+    <div class="notif ${n.read_at ? 'read' : ''}">
+      <p>${n.text}</p>
+      <div class="meta">${n.kind} ／ ${n.created_at.slice(11,19)}${n.read_at ? ' ／ 既読' : ''}</div>
+    </div>`).join('') : '<p class="muted">通知はありません。</p>';
+}
+
+async function loadAudit() {
+  if (!roomId) return;
+  const data = await api(`/api/rooms/${roomId}/audit`);
+  $('audit').innerHTML = data.logs.slice().reverse().map(l =>
+    `<li>${l.created_at.slice(11,19)} [${l.action}] ${l.actor} ${JSON.stringify(l.detail)}</li>`).join('');
+}
+
+async function refresh() { await render(await api(`/api/rooms/${roomId}`)); }
+
+$('btn-create').onclick = async () => {
+  const room = await api('/api/rooms', {method: 'POST', body: JSON.stringify({
+    title: $('title').value, scene: 'wedding', event_date: $('date').value,
+    dress_code: $('dresscode').value, organizer_name: $('organizer').value,
+  })});
+  await render(room);
+};
+
+$('btn-open').onclick = async () => { roomId = $('join-room').value.trim(); if (roomId) await refresh(); };
+
+$('btn-join').onclick = async () => {
+  const name = $('new-member').value.trim(); if (!name) return;
+  await api(`/api/rooms/${roomId}/members`, {method: 'POST', body: JSON.stringify({display_name: name})});
+  $('new-member').value = ''; await refresh();
+};
+
+$('btn-remind').onclick = async () => { await api(`/api/rooms/${roomId}/remind`, {method: 'POST'}); await refresh(); };
+$('btn-audit').onclick = loadAudit;
+
+$('lighting').onchange = async () => {
+  await api(`/api/rooms/${roomId}/lighting`,
+    {method: 'POST', body: JSON.stringify({lighting: $('lighting').value})});
+  await refresh();
+};
+
+$('btn-movie').onclick = async () => {
+  const btn = $('btn-movie');
+  btn.disabled = true; btn.textContent = '生成中…';
+  try { await api(`/api/rooms/${roomId}/movie`, {method: 'POST'}); await refresh(); }
+  catch (e) { alert(e.message); }
+  finally { btn.textContent = '記念ムービーを作る'; }
+};
+
+$('notif-who').onchange = async () => { await refresh(); };
+$('btn-read').onclick = async () => {
+  await api(`/api/rooms/${roomId}/members/${$('notif-who').value}/notifications/read`,
+    {method: 'POST', body: JSON.stringify({})});
+  await refresh();
+};
+
+$('btn-purge').onclick = async () => {
+  if (!confirm('このルームの画像・データをすべて削除します。よろしいですか？')) return;
+  const res = await api(`/api/rooms/${roomId}`, {method: 'DELETE'});
+  alert(`削除しました（オブジェクト ${res.deleted_objects} 件）。監査ログは証跡として残ります。`);
+  await loadAudit();
+  for (const id of ['preview-sec','harmony-sec','members-sec','notif-sec','arrange-sec']) $(id).hidden = true;
+};
+
+document.addEventListener('click', async e => {
+  const consent = e.target.closest('[data-consent]');
+  if (consent) {
+    await api(`/api/rooms/${roomId}/members/${consent.dataset.consent}/consent`,
+      {method: 'POST', body: JSON.stringify({granted: consent.dataset.granted === 'true'})});
+    return refresh();
+  }
+  const tryon = e.target.closest('[data-tryon]');
+  if (tryon) {
+    await api(`/api/rooms/${roomId}/members/${tryon.dataset.tryon}/tryon`,
+      {method: 'POST', body: JSON.stringify({})});
+    return refresh();
+  }
+});
+
+document.addEventListener('change', async e => {
+  const sel = e.target.closest('[data-select]');
+  if (!sel || !sel.value) return;
+  await api(`/api/rooms/${roomId}/members/${sel.dataset.select}/select`,
+    {method: 'POST', body: JSON.stringify({garment_id: sel.value})});
+  await refresh();
+});
+
+(async () => {
+  await loadCatalog();
+  const fromUrl = new URLSearchParams(location.search).get('room') || location.hash.slice(1);
+  if (fromUrl) { roomId = fromUrl; await refresh().catch(() => {}); }
+})();
+</script>
+</body>
+</html>

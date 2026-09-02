@@ -1,0 +1,84 @@
+services:
+  api:
+    build: .
+    image: soroeru-groupfit-api
+    ports:
+      # 他プロジェクトと同時に立てるとき用に、ホスト側だけ差し替えられるようにする
+      - "${HOST_PORT:-8080}:8080"
+    environment:
+      PORT: 8080
+      APP_ENV: local
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8080}
+      # mock | live … 外部APIの実接続切替（キーが入るまでは mock）
+      GEMINI_MODE: ${GEMINI_MODE:-mock}
+      YOUCAM_MODE: ${YOUCAM_MODE:-mock}
+      # 重い画像合成・動画生成の実行先（設計書 §12）: local | gmi
+      COMPOSITOR_ENGINE: ${COMPOSITOR_ENGINE:-local}
+      VIDEO_ENGINE: ${VIDEO_ENGINE:-local}
+      NOTIFY_CHANNEL: ${NOTIFY_CHANNEL:-in_app}   # in_app | line
+      # firestore | memory（memory はテスト用。開発時も本番と同じ経路で動かす）
+      DB_DRIVER: ${DB_DRIVER:-firestore}
+      GOOGLE_CLOUD_PROJECT: ${GOOGLE_CLOUD_PROJECT:-soroeru-groupfit-local}
+      FIRESTORE_EMULATOR_HOST: ${FIRESTORE_EMULATOR_HOST:-firestore:8200}
+      # local | gcs
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      STORAGE_LOCAL_ROOT: /data/storage
+      GCS_BUCKET: ${GCS_BUCKET:-}
+      # 実APIに差し替えるときだけ設定する（本番は Secret Manager から注入）
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.7-flash}
+      YOUCAM_API_KEY: ${YOUCAM_API_KEY:-}
+      YOUCAM_SECRET_KEY: ${YOUCAM_SECRET_KEY:-}
+      LINE_CHANNEL_ACCESS_TOKEN: ${LINE_CHANNEL_ACCESS_TOKEN:-}
+      # GMI Cloud（設計書 §12）
+      GMI_API_KEY: ${GMI_API_KEY:-}
+      GMI_BASE_URL: ${GMI_BASE_URL:-https://api.gmicloud.ai/v1}
+      GMI_IMAGE_MODEL: ${GMI_IMAGE_MODEL:-seedream}
+      GMI_RELIGHT_MODEL: ${GMI_RELIGHT_MODEL:-bria-fibo-relight}
+      GMI_VIDEO_MODEL: ${GMI_VIDEO_MODEL:-image-to-video}
+      # 調和判定のしきい値（設計書 §4）
+      COLOR_CLASH_DELTA_E: ${COLOR_CLASH_DELTA_E:-12}
+      FORMALITY_GAP_THRESHOLD: ${FORMALITY_GAP_THRESHOLD:-2}
+      TTL_DAYS_AFTER_EVENT: ${TTL_DAYS_AFTER_EVENT:-7}
+    volumes:
+      - ./app:/app/app
+      - ./web:/app/web
+      - ./tests:/app/tests
+      - soroeru-groupfit-data:/data
+    command: sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --reload"
+    depends_on:
+      firestore:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8080/healthz')"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  # アーキテクチャ図の生成（`docker compose --profile diagram run --rm diagram`）
+  diagram:
+    profiles: ["diagram"]
+    build:
+      context: ./docs
+    image: soroeru-groupfit-diagram
+    volumes:
+      - .:/work
+
+  # ローカルでも本番と同じ Firestore 経路で動かすため、既定で起動する
+  firestore:
+    image: google/cloud-sdk:emulators
+    command: >
+      gcloud emulators firestore start
+      --host-port=0.0.0.0:8200
+      --project=${GOOGLE_CLOUD_PROJECT:-soroeru-groupfit-local}
+    ports:
+      - "${FIRESTORE_HOST_PORT:-8200}:8200"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8200/"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+volumes:
+  soroeru-groupfit-data:
