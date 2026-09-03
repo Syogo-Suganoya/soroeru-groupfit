@@ -79,6 +79,22 @@ def test_notifications_are_per_member(client):
     )
 
 
+def test_top_page_is_the_guide_and_app_is_separate(client):
+    top = client.get("/")
+    assert top.status_code == 200
+    assert "使い方" in top.text  # トップは機能・使い方の紹介
+
+    web_app = client.get("/app")
+    assert web_app.status_code == 200
+    assert 'id="view-enter"' in web_app.text  # こちらがルーム操作の本体
+
+
+def test_invite_url_points_at_the_app(client):
+    """招待URLを開いた人がいきなりルームを操作できること。"""
+    room = create_room(client)
+    assert room["invite_url"].endswith(f"/app?room={room['room_id']}")
+
+
 def test_catalog_is_served(client):
     items = client.get("/api/catalog").json()
     assert any(g["garment_id"] == "g_navy_satin" for g in items)

@@ -55,6 +55,44 @@ class ReadNotificationsRequest(BaseModel):
     notification_ids: list[str] | None = None
 
 
+class CandidateView(BaseModel):
+    """試着候補1件。画像URLを含むため、本人だけが取得できる場所に置く。"""
+
+    garment: Garment
+    image_url: str
+    tone_match: float = 0.0
+    note: str | None = None
+    selected: bool = False
+
+
+class FittingView(BaseModel):
+    """本人の試着結果。ルーム全体のビューには含めない（§7-2）。"""
+
+    member_uid: str
+    candidates: list[CandidateView] = Field(default_factory=list)
+    selected_garment_id: str | None = None
+
+    @classmethod
+    def of(cls, room: Room, uid: str, *, base_url: str) -> "FittingView":
+        fitting = room.fittings.get(uid)
+        if fitting is None:
+            return cls(member_uid=uid)
+        return cls(
+            member_uid=uid,
+            selected_garment_id=fitting.selected_garment_id,
+            candidates=[
+                CandidateView(
+                    garment=c.garment,
+                    image_url=f"{base_url}/api/images/{c.image_ref}",
+                    tone_match=c.tone_match,
+                    note=c.note,
+                    selected=c.garment.garment_id == fitting.selected_garment_id,
+                )
+                for c in fitting.candidates
+            ],
+        )
+
+
 class MemberView(BaseModel):
     uid: str
     display_name: str
@@ -63,8 +101,8 @@ class MemberView(BaseModel):
     consent_granted: bool
     composed_in_preview: bool  # False ならプレビューではシルエット
     unread_notifications: int = 0
+    # 確定衣装は集合プレビューに現れるため全員に見せる。試着の途中経過は見せない。
     selected_garment: Garment | None = None
-    candidates: list[Garment] = Field(default_factory=list)
 
 
 class RoomView(BaseModel):
@@ -113,7 +151,6 @@ class RoomView(BaseModel):
                     composed_in_preview=m.uid in composed,
                     unread_notifications=unread.get(m.uid, 0),
                     selected_garment=fitting.selected.garment if fitting and fitting.selected else None,
-                    candidates=[c.garment for c in fitting.candidates] if fitting else [],
                 )
             )
         return cls(
@@ -123,7 +160,7 @@ class RoomView(BaseModel):
             scene=room.event.scene.value,
             event_date=room.event.event_date,
             dress_code=room.event.dress_code,
-            invite_url=f"{base_url}/?room={room.room_id}",
+            invite_url=f"{base_url}/app?room={room.room_id}",
             ttl_at=room.ttl_at(ttl_days).isoformat(),
             members=members,
             harmony=room.harmony,

@@ -49,6 +49,8 @@
 | GET | `/api/rooms/{id}/members/{uid}/alternatives` | 代替案 |
 | GET | `/api/rooms/{id}/members/{uid}/notifications` | 本人あての通知（`?unread_only=true` で未読のみ） |
 | POST | `/api/rooms/{id}/members/{uid}/notifications/read` | 既読化（ID省略で本人ぶん全件） |
+| GET | `/` | 機能・使い方の紹介ページ |
+| GET | `/app` | ルーム操作の画面（招待URLの遷移先） |
 | GET | `/api/rooms/{id}/preview.png` | 集合プレビュー |
 | POST | `/api/rooms/{id}/lighting` | 会場ライティングの設定（再合成される） |
 | POST | `/api/rooms/{id}/movie` | 記念ムービーの生成（全員確定が前提） |
@@ -63,7 +65,8 @@
 docker compose up
 ```
 
-http://localhost:8080 で PWA が開く。外部APIキーは不要（既定ですべて mock）。
+http://localhost:8080 が機能・使い方の紹介ページ、`/app` がルーム操作の画面。
+外部APIキーは不要（既定ですべて mock）。
 データは同時に立ち上がる Firestore エミュレータに入る。
 
 開発手順・環境変数・実装の約束ごとは [CONTRIBUTING.md](CONTRIBUTING.md)、

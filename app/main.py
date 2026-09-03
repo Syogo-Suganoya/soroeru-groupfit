@@ -20,6 +20,7 @@ from app.domain.models import EventInfo, Garment, Notification
 from app.schemas import (
     ConsentRequest,
     CreateRoomRequest,
+    FittingView,
     JoinRequest,
     LightingRequest,
     ReadNotificationsRequest,
@@ -174,6 +175,20 @@ async def select_garment(
     return _view(room, s)
 
 
+@app.get("/api/rooms/{room_id}/members/{uid}/fitting", response_model=FittingView)
+async def get_fitting(
+    room_id: str,
+    uid: str,
+    o: Orchestrator = Depends(orchestrator),
+    s: Settings = Depends(settings),
+) -> FittingView:
+    """本人の試着候補（画像URL付き）。ルーム全体のビューには含めない。"""
+    room = await o.get_room(room_id)
+    if room.member(uid) is None:
+        raise HTTPException(status_code=404, detail=f"メンバーが見つかりません: {uid}")
+    return FittingView.of(room, uid, base_url=s.public_base_url)
+
+
 @app.get("/api/rooms/{room_id}/members/{uid}/alternatives", response_model=list[Garment])
 async def alternatives(
     room_id: str, uid: str, o: Orchestrator = Depends(orchestrator)
@@ -320,7 +335,14 @@ async def sweep(o: Orchestrator = Depends(orchestrator)) -> dict:
 
 @app.get("/")
 async def index() -> FileResponse:
+    """機能と使い方の紹介ページ。招待URLを受け取った人が最初に見る想定。"""
     return FileResponse(WEB_DIR / "index.html")
+
+
+@app.get("/app")
+async def web_app() -> FileResponse:
+    """ルーム操作の本体。招待URLはこちらを指す。"""
+    return FileResponse(WEB_DIR / "app.html")
 
 
 if WEB_DIR.is_dir():

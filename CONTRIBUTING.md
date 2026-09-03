@@ -15,7 +15,8 @@
 docker compose up
 ```
 
-api と Firestore エミュレータが立ち上がる。http://localhost:8080 で PWA、`/docs` で OpenAPI。
+api と Firestore エミュレータが立ち上がる。http://localhost:8080 が紹介ページ、
+`/app` がルーム操作の画面、`/docs` で OpenAPI。
 
 **データ管理は Firestore が既定。** 開発時もエミュレータを使い、本番と同じ経路で動かす。
 接続先は `FIRESTORE_EMULATOR_HOST` の有無だけで決まり、アプリのコードは同じ。
@@ -81,7 +82,7 @@ graphviz と日本語フォントは生成専用イメージ（`docs/Dockerfile`
 | `app/ports/` | 外部API・永続化の抽象。mock / live をここだけで差し替える |
 | `app/rendering/` | 試着カード・集合プレビューの描画（Pillow） |
 | `app/main.py` | API Gateway。薄く保ち、進行の判断は Orchestrator に委ねる |
-| `web/` | PWA（単一 HTML） |
+| `web/` | 紹介ページ（`index.html`）とアプリ本体（`app.html`）。どちらも単一 HTML |
 | `docs/` | アーキテクチャ図とその生成環境 |
 
 ## 実装の約束ごと
