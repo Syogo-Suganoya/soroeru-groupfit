@@ -6,7 +6,7 @@ from functools import lru_cache
 
 from app.agents.orchestrator import Orchestrator
 from app.config import Settings, get_settings
-from app.ports.compositor import CompositorPort, GmiCompositor, LocalCompositor
+from app.ports.compositor import CompositorPort, LocalCompositor
 from app.ports.llm import GeminiLlmPort, LlmPort, StubLlmPort
 from app.ports.messaging import InAppMessagingPort, LineMessagingPort, MessagingPort
 from app.ports.repository import (
@@ -16,7 +16,7 @@ from app.ports.repository import (
 )
 from app.ports.storage import GcsStoragePort, LocalStoragePort, StoragePort
 from app.ports.tryon import MockTryOnPort, TryOnPort, YouCamTryOnPort
-from app.ports.video import GmiVideoPort, LocalVideoPort, VideoPort
+from app.ports.video import LocalVideoPort, VideoPort
 
 
 def build_storage(s: Settings) -> StoragePort:
@@ -50,23 +50,10 @@ def build_messaging(s: Settings) -> MessagingPort:
 
 
 def build_compositor(s: Settings) -> CompositorPort:
-    if s.compositor_engine == "gmi":
-        return GmiCompositor(
-            api_key=s.gmi_api_key,
-            base_url=s.gmi_base_url,
-            image_model=s.gmi_image_model,
-            relight_model=s.gmi_relight_model,
-        )
     return LocalCompositor()
 
 
 def build_video(s: Settings) -> VideoPort:
-    if s.video_engine == "gmi":
-        return GmiVideoPort(
-            api_key=s.gmi_api_key,
-            base_url=s.gmi_base_url,
-            video_model=s.gmi_video_model,
-        )
     return LocalVideoPort()
 
 

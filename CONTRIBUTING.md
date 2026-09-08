@@ -54,8 +54,6 @@ docker compose run --rm api python -m pytest -q
 | `GEMINI_MODE` | `mock` | `mock` / `live` |
 | `YOUCAM_MODE` | `mock` | `mock` / `live` |
 | `NOTIFY_CHANNEL` | `in_app` | `in_app` / `line` |
-| `COMPOSITOR_ENGINE` | `local` | `local` / `gmi`（集合プレビューの合成・relight） |
-| `VIDEO_ENGINE` | `local` | `local` / `gmi`（記念ムービー） |
 | `DB_DRIVER` | `firestore` | `firestore` / `memory`（memory はテスト用） |
 | `STORAGE_DRIVER` | `local` | `local` / `gcs` |
 
@@ -112,23 +110,18 @@ mock / live の分岐は `app/deps.py` の1箇所だけに置く。呼び出し�
 **コメントには設計書の該当節を書く。** なぜその制約があるかは設計書側にあるため、
 コードには「何を守っているか」への参照を残す。
 
-## 重い処理（GMI Cloud）を触るとき
+## 集合プレビューの合成・記念ムービーを触るとき
 
-集合プレビューの合成と記念ムービーは `CompositorPort` / `VideoPort` の裏にあり、
-`COMPOSITOR_ENGINE` / `VIDEO_ENGINE` で実行先を選ぶ（設計書 §12）。
+どちらも `CompositorPort` / `VideoPort` の裏にあり、実装は Pillow で完結している（設計書 §12）。
+会場ライティングは `figure.apply_lighting` の色調調整による近似で、物理的な再照明ではない。
 
-**誰をシルエットにするかの判断は、必ずローカル側に残す。** GMI に渡すのは
-「ローカルで組み立てたベース画像」と「シルエットの人数を明示したプロンプト」であり、
-未同意の人の顔を生成させる余地を作らない（設計書 §7-1）。この不変条件は
-`tests/test_gmi_features.py` が守っている。
+**外部の生成モデルに差し替えるときも、誰をシルエットにするかの判断はローカル側に残す。**
+渡してよいのは「ローカルで組み立てたベース画像」までで、未同意の人の顔を生成させる余地を作らない
+（設計書 §7-1）。合成結果がどのエンジン由来かは `PreviewRevision.engine` / `Movie.engine` に残す。
 
-**外部が落ちてもルーム進行は止めない。** GMI 実装は失敗時にローカル合成へフォールバックし、
-どのエンジンで作ったかを `PreviewRevision.engine` / `Movie.engine` に記録する。
-品質は落ちるが体験は続く、という優先順位で書くこと。
-
-GMI Cloud のエンドポイントとモデル名は環境変数で差し替えられる。
-**実キーでの疎通は未検証**なので、応答形式が判明したら
-`GmiCompositor._extract_image` / `GmiVideoPort._extract_video` を実仕様に合わせる。
+**外部を呼ぶ実装を足すなら、失敗時はローカル合成にフォールバックする。**
+品質は落ちるが体験は続く、という優先順位で書くこと。ローカル実装の振る舞いは
+`tests/test_preview_features.py` が守っている。
 
 ## シーンプリセットを増やす
 

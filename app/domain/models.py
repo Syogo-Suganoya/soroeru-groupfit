@@ -47,7 +47,7 @@ class LightingPreset(str, Enum):
     """会場のライト環境（設計書 §12 会場ライティング再現）。
 
     集合プレビューを式場の光に寄せて、当日の見え方に近づけるための指定。
-    合成エンジンが GMI Cloud のときは relight モデルに渡し、ローカル合成では近似する。
+    ローカル合成では色調の調整で近似する。
     """
 
     none = "none"
@@ -225,7 +225,7 @@ class PreviewRevision(BaseModel):
     silhouette_uids: list[str] = Field(default_factory=list)  # 未同意でシルエットの人
     created_at: datetime = Field(default_factory=now)
     reason: str = ""
-    engine: str = "local"  # どの合成エンジンで作ったか（local / gmi）
+    engine: str = "local"  # どの合成エンジンで作ったか
     lighting: LightingPreset = LightingPreset.none
 
 
@@ -264,7 +264,7 @@ class Movie(BaseModel):
     movie_ref: str
     content_type: str = "image/gif"
     seconds: float = 3.0
-    engine: str = "local"  # local / gmi
+    engine: str = "local"  # どの生成エンジンで作ったか
     has_audio: bool = False
     source_revision: int = 0  # 元にした集合プレビューのリビジョン
     created_at: datetime = Field(default_factory=now)

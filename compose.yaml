@@ -12,9 +12,6 @@ services:
       # mock | live … 外部APIの実接続切替（キーが入るまでは mock）
       GEMINI_MODE: ${GEMINI_MODE:-mock}
       YOUCAM_MODE: ${YOUCAM_MODE:-mock}
-      # 重い画像合成・動画生成の実行先（設計書 §12）: local | gmi
-      COMPOSITOR_ENGINE: ${COMPOSITOR_ENGINE:-local}
-      VIDEO_ENGINE: ${VIDEO_ENGINE:-local}
       NOTIFY_CHANNEL: ${NOTIFY_CHANNEL:-in_app}   # in_app | line
       # firestore | memory（memory はテスト用。開発時も本番と同じ経路で動かす）
       DB_DRIVER: ${DB_DRIVER:-firestore}
@@ -30,12 +27,6 @@ services:
       YOUCAM_API_KEY: ${YOUCAM_API_KEY:-}
       YOUCAM_SECRET_KEY: ${YOUCAM_SECRET_KEY:-}
       LINE_CHANNEL_ACCESS_TOKEN: ${LINE_CHANNEL_ACCESS_TOKEN:-}
-      # GMI Cloud（設計書 §12）
-      GMI_API_KEY: ${GMI_API_KEY:-}
-      GMI_BASE_URL: ${GMI_BASE_URL:-https://api.gmicloud.ai/v1}
-      GMI_IMAGE_MODEL: ${GMI_IMAGE_MODEL:-seedream}
-      GMI_RELIGHT_MODEL: ${GMI_RELIGHT_MODEL:-bria-fibo-relight}
-      GMI_VIDEO_MODEL: ${GMI_VIDEO_MODEL:-image-to-video}
       # 調和判定のしきい値（設計書 §4）
       COLOR_CLASH_DELTA_E: ${COLOR_CLASH_DELTA_E:-12}
       FORMALITY_GAP_THRESHOLD: ${FORMALITY_GAP_THRESHOLD:-2}

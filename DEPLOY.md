@@ -25,7 +25,7 @@ CI からの継続デプロイは「C. GitHub Actions」にあるが、**現在�
 | Artifact Registry | コンテナイメージの置き場 |
 | Firestore（Native モード） | ルーム・同意状態 |
 | Cloud Storage バケット | ルーム内一時画像 |
-| Secret Manager | Gemini / YouCam / GMI Cloud のキー |
+| Secret Manager | Gemini / YouCam のキー |
 | サービスアカウント `soroeru-run` | Cloud Run の実行 ID |
 | Cloud Scheduler ジョブ | TTL 到来ルームの掃引（設計書 §7-2） |
 
@@ -85,13 +85,7 @@ printf 'あなたのYouCamキー' | gcloud secrets create youcam-api-key --data-
 printf 'あなたのYouCamシークレット' | gcloud secrets create youcam-secret-key --data-file=-
 ```
 
-GMI Cloud（設計書 §12 の画像合成・動画生成）を使う場合:
-
-```bash
-printf 'あなたのGMIキー' | gcloud secrets create gmi-api-key --data-file=-
-```
-
-mock・ローカル合成のまま動かすなら、この手順と A-7 のシークレット指定は飛ばしてよい。
+mock のまま動かすなら、この手順と A-7 のシークレット指定は飛ばしてよい。
 
 ## A-5. サービスアカウントを作って権限を付ける
 
@@ -154,13 +148,8 @@ gcloud run services update ${SERVICE} --region ${REGION} --update-env-vars "PUBL
 gcloud run services update ${SERVICE} --region ${REGION} --update-env-vars "GEMINI_MODE=live,YOUCAM_MODE=live" --update-secrets "GEMINI_API_KEY=gemini-api-key:latest,YOUCAM_API_KEY=youcam-api-key:latest,YOUCAM_SECRET_KEY=youcam-secret-key:latest"
 ```
 
-GMI Cloud に合成・動画生成を任せる場合（設計書 §12）:
-
-```bash
-gcloud run services update ${SERVICE} --region ${REGION} --update-env-vars "COMPOSITOR_ENGINE=gmi,VIDEO_ENGINE=gmi" --update-secrets "GMI_API_KEY=gmi-api-key:latest"
-```
-
-動画生成は時間がかかるため、タイムアウトと同時実行数を上げておく:
+集合プレビューの合成と記念ムービーはコンテナ内で描画する（設計書 §12）。
+処理に時間とメモリを使うため、タイムアウトとメモリを上げておく:
 
 ```bash
 gcloud run services update ${SERVICE} --region ${REGION} --timeout 300 --memory 1Gi
@@ -235,12 +224,11 @@ curl -s ${URL}/healthz
 
 ## B-4. シークレットを登録する
 
-mock・ローカル合成のまま動かすなら飛ばしてよい。
+mock のまま動かすなら飛ばしてよい。
 
 1. 検索窓に「Secret Manager」→ **シークレットを作成**
 2. 名前 `gemini-api-key`、シークレットの値に実キーを貼る → **シークレットを作成**
 3. 同様に `youcam-api-key`、`youcam-secret-key` を作る
-4. GMI Cloud を使う場合は `gmi-api-key` も作る
 
 ## B-5. サービスアカウントを作る
 
@@ -287,15 +275,12 @@ mock・ローカル合成のまま動かすなら飛ばしてよい。
      | `GEMINI_MODE` | `mock`（実キーを使うなら `live`） |
      | `YOUCAM_MODE` | `mock`（同上） |
      | `GEMINI_MODEL` | `gemini-3.7-flash` |
-     | `COMPOSITOR_ENGINE` | `local`（GMI Cloud を使うなら `gmi`） |
-     | `VIDEO_ENGINE` | `local`（同上） |
 
    - 実キーを使う場合は同じタブの**シークレットを参照**から
      `GEMINI_API_KEY` ← `gemini-api-key`、`YOUCAM_API_KEY` ← `youcam-api-key`、
-     `YOUCAM_SECRET_KEY` ← `youcam-secret-key`、
-     GMI Cloud を使うなら `GMI_API_KEY` ← `gmi-api-key` を割り当てる（バージョンは `latest`）
-   - **コンテナ**タブ → 記念ムービーの生成に時間がかかるため、
-     GMI Cloud を使う場合はリクエストのタイムアウトを `300` 秒、メモリを `1 GiB` にする
+     `YOUCAM_SECRET_KEY` ← `youcam-secret-key` を割り当てる（バージョンは `latest`）
+   - **コンテナ**タブ → 集合プレビューと記念ムービーの生成に時間がかかるため、
+     リクエストのタイムアウトを `300` 秒、メモリを `1 GiB` にする
 6. **作成**
 
 ## B-7. URL を設定に反映する

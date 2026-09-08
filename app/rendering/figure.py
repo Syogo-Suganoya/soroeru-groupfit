@@ -182,9 +182,9 @@ _LIGHTING = {
 
 
 def apply_lighting(png: bytes, lighting: LightingPreset) -> bytes:
-    """会場の光環境を近似する（設計書 §12 会場ライティング再現のローカル版）。
+    """会場の光環境を近似する（設計書 §12 会場ライティング再現）。
 
-    GMI Cloud の relight モデルの代わりに、色被せと明度・彩度の調整で「らしさ」を出す。
+    色被せと明度・彩度の調整で「らしさ」を出す。
     物理的な再照明ではないため、当日の見え方の目安として扱う。
     """
     params = _LIGHTING.get(lighting)

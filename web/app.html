@@ -566,7 +566,7 @@ function renderFinish() {
   $('lighting').value = room.lighting;
   $('btn-movie').disabled = !room.movie_available;
   $('movie-note').textContent = room.movie
-    ? `${room.movie.engine} ／ ${room.movie.seconds}秒`
+    ? `${room.movie.seconds}秒`
     : (room.movie_blocked_reason || '');
   show('movie-box', !!room.movie_url);
   if (room.movie_url) {

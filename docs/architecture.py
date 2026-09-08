@@ -53,7 +53,6 @@ with Diagram(
     with Cluster("AI・外部API", graph_attr=CLUSTER_ATTR):
         gemini = AIPlatform("Gemini API\n判断・調和提案")
         youcam = Display("YouCam API\n個人試着")
-        gmi = Display("GMI Cloud\n画像合成・動画生成")
 
     with Cluster("データ", graph_attr=CLUSTER_ATTR):
         firestore = Firestore("Firestore")
@@ -63,7 +62,6 @@ with Diagram(
     users >> api >> agent
     agent >> gemini
     agent >> youcam
-    agent >> gmi
     agent >> firestore
     agent >> gcs
     agent >> logging

@@ -76,8 +76,6 @@ async def healthz(s: Settings = Depends(settings)) -> dict:
             "notify": s.notify_channel,
             "db": s.db_driver,
             "storage": s.storage_driver,
-            "compositor": s.compositor_engine,
-            "video": s.video_engine,
         },
     }
 

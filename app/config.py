@@ -17,11 +17,6 @@ class Settings(BaseSettings):
     gemini_mode: Mode = "mock"
     youcam_mode: Mode = "mock"
 
-    # 重い画像合成・動画生成の実行先（設計書 §12）。
-    # local = Pillow で完結。gmi = GMI Cloud の画像編集/動画生成モデルを使う。
-    compositor_engine: Literal["local", "gmi"] = "local"
-    video_engine: Literal["local", "gmi"] = "local"
-
     # 通知チャネル。既定はアプリ内通知（外部送信なし）。
     notify_channel: Literal["in_app", "line"] = "in_app"
 
@@ -38,13 +33,6 @@ class Settings(BaseSettings):
     youcam_api_key: str = ""
     youcam_secret_key: str = ""
     line_channel_access_token: str = ""
-
-    # GMI Cloud（設計書 §12）。エンドポイントとモデル名は差し替えられるようにしておく。
-    gmi_api_key: str = ""
-    gmi_base_url: str = "https://api.gmicloud.ai/v1"
-    gmi_image_model: str = "seedream"  # 集合プレビューの品質エンジン
-    gmi_relight_model: str = "bria-fibo-relight"  # 会場ライティング再現
-    gmi_video_model: str = "image-to-video"  # 記念ムービー
 
     public_base_url: str = "http://localhost:8080"
 
