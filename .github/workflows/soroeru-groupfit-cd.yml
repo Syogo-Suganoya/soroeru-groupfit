@@ -1,36 +1,32 @@
-# ソロエル（gcp_hack/soroeru-groupfit）を Cloud Run へデプロイする CD。
+# ソロエルを Cloud Run へデプロイする CD。
 #
-# ■ 現在の状態: 自動デプロイはオフ
-#   push では起動しない。手動実行（Actions タブの "Run workflow"）だけができる。
-#   さらに安全側に倒すため、環境変数 CD_ENABLED が "true" でなければ
-#   デプロイ手前で停止する（テストだけ流して終わる）。
+# ■ 現在の状態: 自動デプロイはオン
+#   main への push でテスト → デプロイまで走る。
+#   ドキュメントだけの変更（*.md / docs/）ではデプロイしない。
+#   Actions タブからの手動実行もできる（deploy を false にするとテストだけ流す）。
 #
-# ■ オンにする手順
-#   1. GitHub の Settings > Secrets and variables > Actions > Variables で
-#      CD_ENABLED = true を作る（これだけで手動デプロイが通るようになる）
-#   2. main への push でも動かしたいときは、下の `push:` のコメントを外す
-#   3. 認証情報（Variables）は DEPLOY.md「C. GitHub Actions」を参照
+# ■ 止めたいとき
+#   GitHub の Actions タブ → このワークフロー → 右上 "..." → Disable workflow。
+#   ファイルを消さずに止められる。恒久的に止めるなら下の `push:` を消す。
 #
-# ■ オフに戻す手順
-#   CD_ENABLED を false にする（または変数ごと削除する）。
-#   push トリガーを付けている場合はコメントに戻す。
+# ■ 認証情報（リポジトリ変数）は DEPLOY.md「C. GitHub Actions」を参照
 
 name: soroeru-groupfit CD
 
 on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "_memo/**"
+
   workflow_dispatch:
     inputs:
       deploy:
         description: "デプロイまで実行する（false ならテストのみ）"
         type: boolean
-        default: false
-
-  # ↓ 自動デプロイをオンにするときにコメントを外す
-  # push:
-  #   branches: [main]
-  #   paths:
-  #     - "gcp_hack/soroeru-groupfit/**"
-  #     - ".github/workflows/soroeru-groupfit-cd.yml"
+        default: true
 
 env:
   PROJECT_ID: soroeru-groupfit
@@ -43,9 +39,6 @@ jobs:
   test:
     name: テスト
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: gcp_hack/soroeru-groupfit
     steps:
       - uses: actions/checkout@v4
 
@@ -65,14 +58,11 @@ jobs:
     name: Cloud Run へデプロイ
     needs: test
     runs-on: ubuntu-latest
-    # CD_ENABLED が true で、かつ手動実行時に deploy を選んだときだけ動く
-    if: vars.CD_ENABLED == 'true' && (github.event_name == 'push' || inputs.deploy)
+    # push は常にデプロイ。手動実行は deploy を選んだときだけ。
+    if: github.event_name == 'push' || inputs.deploy
     permissions:
       contents: read
       id-token: write # Workload Identity Federation に必要
-    defaults:
-      run:
-        working-directory: gcp_hack/soroeru-groupfit
     steps:
       - uses: actions/checkout@v4
 
@@ -84,7 +74,8 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@v2
 
-      # 記念ムービーの生成に時間がかかるため、タイムアウトとメモリを上げてある
+      # 集合プレビューと記念ムービーの生成に時間がかかるため、タイムアウトとメモリを上げてある。
+      # 実キーは Secret Manager から注入する（イメージにもリポジトリにも入れない）。
       - name: デプロイ
         run: |
           gcloud run deploy "$SERVICE" \
@@ -95,7 +86,8 @@ jobs:
             --allow-unauthenticated \
             --timeout 300 \
             --memory 1Gi \
-            --set-env-vars "APP_ENV=prod,DB_DRIVER=firestore,STORAGE_DRIVER=gcs,GCS_BUCKET=$BUCKET,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,NOTIFY_CHANNEL=in_app,GEMINI_MODE=mock,YOUCAM_MODE=mock,GEMINI_MODEL=gemini-3.7-flash,COMPOSITOR_ENGINE=local,VIDEO_ENGINE=local" \
+            --set-env-vars "APP_ENV=prod,DB_DRIVER=firestore,STORAGE_DRIVER=gcs,GCS_BUCKET=$BUCKET,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,NOTIFY_CHANNEL=in_app,GEMINI_MODE=live,YOUCAM_MODE=live,GEMINI_MODEL=gemini-3.7-flash" \
+            --set-secrets "GEMINI_API_KEY=gemini-api-key:latest,YOUCAM_API_KEY=youcam-api-key:latest" \
             --quiet
 
       # 招待URLと集合プレビューのURL生成に使うため、確定したURLを流し込む
@@ -115,7 +107,9 @@ jobs:
           echo "デプロイ先: $URL"
           BODY=$(curl -sSf --retry 5 --retry-delay 3 "$URL/healthz" | tee /dev/stderr)
           echo "$BODY" | grep -q '"status":"ok"'
-          # 環境変数の設定漏れを検知する（本番はどちらもクラウド側を向く）
+          # 環境変数の設定漏れを検知する（本番はクラウド側と実APIを向く）
           echo "$BODY" | grep -q '"db":"firestore"'
           echo "$BODY" | grep -q '"storage":"gcs"'
+          echo "$BODY" | grep -q '"gemini":"live"'
+          echo "$BODY" | grep -q '"youcam":"live"'
           echo "### デプロイ完了: $URL" >> "$GITHUB_STEP_SUMMARY"

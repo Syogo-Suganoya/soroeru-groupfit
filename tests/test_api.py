@@ -7,9 +7,9 @@ from datetime import date, timedelta
 import pytest
 from fastapi.testclient import TestClient
 
-from app.config import Settings
 from app.deps import Container
 from app.main import app, container as container_dep
+from tests.conftest import build_settings
 
 
 @pytest.fixture
@@ -18,7 +18,7 @@ def client(tmp_path):
     # tests/test_firestore_repository.py がエミュレータ相手に検証する）。
     # 差し替えるのはルート側が Depends している関数そのもの。
     test_container = Container(
-        Settings(storage_local_root=str(tmp_path / "storage"), db_driver="memory")
+        build_settings(storage_local_root=str(tmp_path / "storage"), db_driver="memory")
     )
     app.dependency_overrides[container_dep] = lambda: test_container
     with TestClient(app) as c:

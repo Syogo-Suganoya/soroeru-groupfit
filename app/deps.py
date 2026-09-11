@@ -33,7 +33,15 @@ def build_repository(s: Settings) -> RoomRepository:
 
 def build_tryon(s: Settings, storage: StoragePort) -> TryOnPort:
     if s.youcam_mode == "live":
-        return YouCamTryOnPort(storage, s.youcam_api_key, s.youcam_secret_key)
+        return YouCamTryOnPort(
+            storage,
+            s.youcam_api_key,
+            s.youcam_secret_key,
+            base_url=s.youcam_base_url,
+            garment_category=s.youcam_garment_category,
+            poll_interval=s.youcam_poll_interval_seconds,
+            timeout=s.youcam_timeout_seconds,
+        )
     return MockTryOnPort(storage)
 
 

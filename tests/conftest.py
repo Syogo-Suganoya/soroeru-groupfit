@@ -17,9 +17,28 @@ from app.ports.tryon import MockTryOnPort
 from app.ports.video import LocalVideoPort
 
 
+def build_settings(**overrides) -> Settings:
+    """テスト用の設定。
+
+    外部接続モードは必ず mock に固定する。`.env` や compose 経由で
+    `GEMINI_MODE=live` を設定している人の手元だけテストが落ちる（実キーと
+    live 用の依存を要求してしまう）のを防ぐ。
+    """
+    fixed = {
+        "gemini_mode": "mock",
+        "youcam_mode": "mock",
+        "notify_channel": "in_app",
+        "storage_driver": "local",
+        **overrides,
+    }
+    return Settings(_env_file=None, **fixed)
+
+
 @pytest.fixture
 def settings(tmp_path) -> Settings:
-    return Settings(storage_local_root=str(tmp_path / "storage"), db_driver="memory")
+    return build_settings(
+        storage_local_root=str(tmp_path / "storage"), db_driver="memory"
+    )
 
 
 @pytest.fixture

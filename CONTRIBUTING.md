@@ -60,6 +60,28 @@ docker compose run --rm api python -m pytest -q
 実キーを使うときは `.env.example` を `.env` にコピーして値を入れ、対応するモードを切り替える。
 `.env` はコミットしない。本番の秘密情報は Secret Manager から Cloud Run に注入し、イメージには焼き込まない。
 
+**テストは `.env` に影響されない。** `tests/conftest.py` の `build_settings()` がモードを mock に固定する。
+ここを迂回して `Settings()` を直に作らないこと。手元で `YOUCAM_MODE=live` にしている人だけ
+テストが実キーを要求する、という状態になる。
+
+## YouCam（個人試着）を触るとき
+
+`YouCamTryOnPort` は AI Clothes Virtual Try-On と AI Facial Color Tones Analyzer を叩く。
+どちらも同じ流れで、順番を飛ばすと動かない:
+
+1. `POST /s2s/v2.0/file` でアップロード先URLと `file_id` を受け取る
+2. **返ってきたURLへ実体を PUT する。** ここを省くとタスクが 404 / 500 になる
+3. `POST /s2s/v2.0/task/cloth-v4`（または `skin-tone-analysis`）でタスクを投入
+4. `task_status` が `success` か `error` になるまで `GET .../{task_id}` をポーリングする。
+   **保持期間内に問い合わせないと、成功していてもタイムアウト扱いになる**
+
+外部に出すのは本人の写真だけ。集合プレビューは他人が写るため送らない（設計書 §7-1）。
+写真が無い・衣装に `reference_image_url` が無い・APIが落ちた、のいずれでも mock 描画に落として
+ルーム進行は止めない。どちらで作ったかは `TryOnResult.engine` に残す。
+
+パーソナルカラーのシーズン分類は YouCam 側には無く、返ってくる肌色の16進値から
+`app/domain/color.py` の `personal_color_season()` で起こしている。しきい値を変えるならここ。
+
 ## アーキテクチャ図の再生成
 
 図は [`docs/architecture.py`](docs/architecture.py)（mingrammer/diagrams）から生成する。

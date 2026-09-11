@@ -7,13 +7,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, HTTPException, Response
+from fastapi import Depends, FastAPI, File, HTTPException, Response, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.agents.keepsake import KeepsakeAgent
 from app.agents.orchestrator import MemberNotFound, Orchestrator, RoomNotFound
-from app.config import Settings, get_settings
+from app.config import Settings
 from app.deps import Container, get_container
 from app.domain import catalog
 from app.domain.models import EventInfo, Garment, Notification
@@ -42,8 +42,13 @@ def orchestrator(c: Container = Depends(container)) -> Orchestrator:
     return c.orchestrator
 
 
-def settings() -> Settings:
-    return get_settings()
+def settings(c: Container = Depends(container)) -> Settings:
+    """コンテナが組み立てに使った設定をそのまま返す。
+
+    グローバルの `get_settings()` を直接引かないこと。コンテナだけ差し替えたときに
+    「ポートは mock なのに /healthz は live と言う」といった食い違いが起きる。
+    """
+    return c.settings
 
 
 def _view(room, s: Settings) -> RoomView:
@@ -137,6 +142,44 @@ async def set_consent(
 ) -> RoomView:
     room = await o.set_consent(room_id=room_id, uid=uid, granted=body.granted)
     return _view(room, s)
+
+
+PHOTO_TYPES = {"image/jpeg", "image/jpg", "image/png"}
+
+
+@app.post("/api/rooms/{room_id}/members/{uid}/photo", response_model=RoomView)
+async def upload_photo(
+    room_id: str,
+    uid: str,
+    file: UploadFile = File(...),
+    o: Orchestrator = Depends(orchestrator),
+    s: Settings = Depends(settings),
+) -> RoomView:
+    """本人の写真を登録する。live 試着はこれを入力にする。"""
+    if file.content_type not in PHOTO_TYPES:
+        raise HTTPException(status_code=400, detail="JPEG か PNG を選んでください")
+    data = await file.read()
+    if not data:
+        raise HTTPException(status_code=400, detail="ファイルが空です")
+    if len(data) > s.photo_max_bytes:
+        raise HTTPException(
+            status_code=413,
+            detail=f"写真は {s.photo_max_bytes // (1024 * 1024)}MB までです",
+        )
+    room = await o.set_photo(
+        room_id=room_id, uid=uid, data=data, content_type=file.content_type
+    )
+    return _view(room, s)
+
+
+@app.delete("/api/rooms/{room_id}/members/{uid}/photo", response_model=RoomView)
+async def delete_photo(
+    room_id: str,
+    uid: str,
+    o: Orchestrator = Depends(orchestrator),
+    s: Settings = Depends(settings),
+) -> RoomView:
+    return _view(await o.delete_photo(room_id=room_id, uid=uid), s)
 
 
 # ------------------------------------------------------------------ 試着

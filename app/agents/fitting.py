@@ -35,6 +35,7 @@ class FittingAgent:
                     member_uid=member.uid,
                     member_name=member.display_name,
                     garment=garment,
+                    photo_ref=member.photo_ref,
                 )
             )
         # パーソナルカラー適合度の高い順に提示する（あくまで提案の並び）。
