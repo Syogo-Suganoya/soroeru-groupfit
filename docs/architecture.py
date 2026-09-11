@@ -16,7 +16,6 @@ from diagrams.gcp.ml import AIPlatform
 from diagrams.gcp.operations import Logging
 from diagrams.gcp.storage import GCS
 from diagrams.onprem.client import Users
-from diagrams.programming.flowchart import Display
 
 # graphviz に日本語フォントを明示する（fonts-ipafont-gothic を同梱）
 FONT = "IPAGothic"
@@ -50,9 +49,8 @@ with Diagram(
         agent = Run("agent\nADK エージェント")
 
     # LINE は MessagingPort の実装として口だけあるが、MVP では使わないので載せない
-    with Cluster("AI・外部API", graph_attr=CLUSTER_ATTR):
+    with Cluster("AI", graph_attr=CLUSTER_ATTR):
         gemini = AIPlatform("Gemini API\n判断・調和提案")
-        youcam = Display("YouCam API\n個人試着")
 
     with Cluster("データ", graph_attr=CLUSTER_ATTR):
         firestore = Firestore("Firestore")
@@ -61,7 +59,6 @@ with Diagram(
 
     users >> api >> agent
     agent >> gemini
-    agent >> youcam
     agent >> firestore
     agent >> gcs
     agent >> logging

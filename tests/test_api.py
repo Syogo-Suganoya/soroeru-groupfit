@@ -44,7 +44,7 @@ def create_room(client) -> dict:
 def test_health_reports_modes(client):
     body = client.get("/health").json()
     assert body["status"] == "ok"
-    assert body["modes"]["youcam"] == "mock"
+    assert body["modes"]["gemini"] == "mock"
     assert body["modes"]["notify"] == "in_app"
 
 

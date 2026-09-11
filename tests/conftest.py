@@ -26,7 +26,6 @@ def build_settings(**overrides) -> Settings:
     """
     fixed = {
         "gemini_mode": "mock",
-        "youcam_mode": "mock",
         "notify_channel": "in_app",
         "storage_driver": "local",
         **overrides,

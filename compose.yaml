@@ -11,7 +11,6 @@ services:
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8080}
       # mock | live … 外部APIの実接続切替（キーが入るまでは mock）
       GEMINI_MODE: ${GEMINI_MODE:-mock}
-      YOUCAM_MODE: ${YOUCAM_MODE:-mock}
       NOTIFY_CHANNEL: ${NOTIFY_CHANNEL:-in_app}   # in_app | line
       # firestore | memory（memory はテスト用。開発時も本番と同じ経路で動かす）
       DB_DRIVER: ${DB_DRIVER:-firestore}
@@ -24,8 +23,6 @@ services:
       # 実APIに差し替えるときだけ設定する（本番は Secret Manager から注入）
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.7-flash}
-      YOUCAM_API_KEY: ${YOUCAM_API_KEY:-}
-      YOUCAM_SECRET_KEY: ${YOUCAM_SECRET_KEY:-}
       LINE_CHANNEL_ACCESS_TOKEN: ${LINE_CHANNEL_ACCESS_TOKEN:-}
       # 調和判定のしきい値（設計書 §4）
       COLOR_CLASH_DELTA_E: ${COLOR_CLASH_DELTA_E:-12}

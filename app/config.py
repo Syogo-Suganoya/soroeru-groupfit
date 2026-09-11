@@ -15,7 +15,6 @@ class Settings(BaseSettings):
 
     # 外部API接続の切替（設計書 §5）
     gemini_mode: Mode = "mock"
-    youcam_mode: Mode = "mock"
 
     # 通知チャネル。既定はアプリ内通知（外部送信なし）。
     notify_channel: Literal["in_app", "line"] = "in_app"
@@ -30,16 +29,6 @@ class Settings(BaseSettings):
 
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3.7-flash"
-    youcam_api_key: str = ""
-    youcam_secret_key: str = ""
-    # YouCam（Perfect Corp）。YOUCAM_MODE=live のときだけ使う。
-    youcam_base_url: str = "https://yce-api-01.makeupar.com"
-    # full_body / upper_body / lower_body / shoes / outer / auto
-    youcam_garment_category: str = "auto"
-    youcam_poll_interval_seconds: float = 2.0
-    youcam_timeout_seconds: float = 120.0
-    # 本人写真の上限（YouCam 側の制限が 10MB）
-    photo_max_bytes: int = 10 * 1024 * 1024
     line_channel_access_token: str = ""
 
     public_base_url: str = "http://localhost:8080"

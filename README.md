@@ -36,10 +36,9 @@
   会場ライティングも色調で近似する。外部の生成モデルに投げないため、
   **未同意の人の顔が生成される余地がない**。より質の高い実装に差し替えるときも
   `CompositorPort` / `VideoPort` の裏で閉じる。
-- **個人試着は YouCam に出せる**（`YOUCAM_MODE=live`）。本人が写真を登録した場合だけ外部に送り、
-  写真が無い・API が落ちた・衣装に参考画像が無いときは mock 描画に落ちてルーム進行は止まらない。
-  どちらで作ったかは `TryOnResult.engine` に残る。集合プレビュー（他人が写る画像）は
-  外部に出さないという線引きは変わらない。
+- **顔写真は受け取らない。** 個人試着もローカル描画で完結するため、アプリに写真を
+  上げる導線そのものが無い。外部の試着エンジンを足すときも、送ってよいのは本人の分だけで、
+  集合プレビュー（他人が写る画像）は外に出さない。
 
 ## 主なエンドポイント
 
@@ -48,8 +47,6 @@
 | POST | `/api/rooms` | ルーム作成（幹事） |
 | POST | `/api/rooms/{id}/members` | 招待URLからの参加 |
 | POST | `/api/rooms/{id}/members/{uid}/consent` | 合成同意の取得・撤回 |
-| POST | `/api/rooms/{id}/members/{uid}/photo` | 本人写真の登録（任意・live 試着の入力） |
-| DELETE | `/api/rooms/{id}/members/{uid}/photo` | 本人写真の削除 |
 | POST | `/api/rooms/{id}/members/{uid}/tryon` | 個人試着（候補生成） |
 | POST | `/api/rooms/{id}/members/{uid}/select` | 衣装確定 |
 | GET | `/api/rooms/{id}/members/{uid}/alternatives` | 代替案 |
@@ -81,8 +78,7 @@ Cloud Run へのデプロイは [DEPLOY.md](DEPLOY.md) を参照。
 ## 未実装（設計書 §9 のとおり MVP 外）
 
 - LINE 通知の live 実装（ポートの口だけ用意）
-- カタログの衣装参考画像（`reference_image_url`）。これが無いと YouCam live 試着は
-  衣装ごとに mock 描画へ落ちる
+- 実写のバーチャル試着（現状は衣装の色・柄からイラストを描く）
 - 生成モデルによる高品質な集合プレビュー合成（現状は Pillow で描画）
 - 記念ムービーの音楽生成（GIFは無音）
 - アプリ外への通知（Web Push・LINE）。通知はアプリを開いた人にしか届かない

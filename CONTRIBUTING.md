@@ -52,7 +52,6 @@ docker compose run --rm api python -m pytest -q
 | 環境変数 | 既定 | 取りうる値 |
 |---|---|---|
 | `GEMINI_MODE` | `mock` | `mock` / `live` |
-| `YOUCAM_MODE` | `mock` | `mock` / `live` |
 | `NOTIFY_CHANNEL` | `in_app` | `in_app` / `line` |
 | `DB_DRIVER` | `firestore` | `firestore` / `memory`（memory はテスト用） |
 | `STORAGE_DRIVER` | `local` | `local` / `gcs` |
@@ -61,26 +60,21 @@ docker compose run --rm api python -m pytest -q
 `.env` はコミットしない。本番の秘密情報は Secret Manager から Cloud Run に注入し、イメージには焼き込まない。
 
 **テストは `.env` に影響されない。** `tests/conftest.py` の `build_settings()` がモードを mock に固定する。
-ここを迂回して `Settings()` を直に作らないこと。手元で `YOUCAM_MODE=live` にしている人だけ
+ここを迂回して `Settings()` を直に作らないこと。手元で `GEMINI_MODE=live` にしている人だけ
 テストが実キーを要求する、という状態になる。
 
-## YouCam（個人試着）を触るとき
+## 個人試着を触るとき
 
-`YouCamTryOnPort` は AI Clothes Virtual Try-On と AI Facial Color Tones Analyzer を叩く。
-どちらも同じ流れで、順番を飛ばすと動かない:
+`TryOnPort` の裏は `MockTryOnPort` だけで、衣装の色・柄からイラストを描いている。
+**アプリは顔写真を受け取らない。** 実写の試着エンジンを足すときは、次の2つを守ること:
 
-1. `POST /s2s/v2.0/file` でアップロード先URLと `file_id` を受け取る
-2. **返ってきたURLへ実体を PUT する。** ここを省くとタスクが 404 / 500 になる
-3. `POST /s2s/v2.0/task/cloth-v4`（または `skin-tone-analysis`）でタスクを投入
-4. `task_status` が `success` か `error` になるまで `GET .../{task_id}` をポーリングする。
-   **保持期間内に問い合わせないと、成功していてもタイムアウト扱いになる**
+- 外部に送ってよいのは本人の分だけ。集合プレビューは他人が写るため送らない（設計書 §7-1）
+- 外部が落ちてもルーム進行は止めない。mock 描画に落として、どちらで作ったかを
+  `TryOnResult.engine` に残す
 
-外部に出すのは本人の写真だけ。集合プレビューは他人が写るため送らない（設計書 §7-1）。
-写真が無い・衣装に `reference_image_url` が無い・APIが落ちた、のいずれでも mock 描画に落として
-ルーム進行は止めない。どちらで作ったかは `TryOnResult.engine` に残す。
-
-パーソナルカラーのシーズン分類は YouCam 側には無く、返ってくる肌色の16進値から
-`app/domain/color.py` の `personal_color_season()` で起こしている。しきい値を変えるならここ。
+パーソナルカラーは `MockTryOnPort._tone_of` が uid から決定的に割り当て、
+`figure.tone_match_score` で衣装色との適合度を出している。あくまで提示順の並び替え用で、
+「似合う / 似合わない」を断定しない（設計書 §7-3）。
 
 ## アーキテクチャ図の再生成
 

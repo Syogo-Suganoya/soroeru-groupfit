@@ -157,8 +157,6 @@ class Orchestrator:
         deleted = 0
         if not granted:
             deleted = await self.composer.forget_member(room, uid=uid)
-            # 顔写真は最も戻せない情報なので、撤回時は実体ごと消す（§7-1）
-            deleted += await self._delete_photo_object(room, member)
 
         await self.audit(
             room_id=room.room_id,
@@ -174,65 +172,6 @@ class Orchestrator:
         return await self.advance(
             room,
             reason=f"{member.display_name}さんが合成同意を{'許可' if granted else '撤回'}",
-        )
-
-    # ------------------------------------------------------------------ 本人写真
-
-    async def _delete_photo_object(self, room: Room, member: Member) -> int:
-        """写真の実体を消して参照も外す。呼び出し側で保存する前提。"""
-        if not member.photo_ref:
-            return 0
-        # 拡張子を問わず消したいので、本人のディレクトリごと落とす
-        deleted = await self.storage.delete_prefix(
-            room_id=room.room_id, prefix=f"members/{member.uid}"
-        )
-        member.photo_ref = None
-        return deleted
-
-    async def set_photo(
-        self, *, room_id: str, uid: str, data: bytes, content_type: str
-    ) -> Room:
-        """本人の写真を登録する。試着（live）はこれを入力に使う。
-
-        写真はルーム配下に置き、TTL 削除と完全削除の対象に自動的に含める（§7-2）。
-        """
-        room = await self.get_room(room_id)
-        member = self._member(room, uid)
-
-        suffix = "png" if content_type == "image/png" else "jpg"
-        await self._delete_photo_object(room, member)  # 撮り直しは上書きせず消してから
-        member.photo_ref = await self.storage.put(
-            room_id=room.room_id,
-            key=f"members/{uid}/photo.{suffix}",
-            data=data,
-            content_type=content_type,
-        )
-
-        await self.audit(
-            room_id=room.room_id,
-            actor=uid,
-            action=AuditAction.photo_upload,
-            target=uid,
-            detail={"bytes": len(data), "content_type": content_type},
-        )
-        return await self.advance(
-            room, reason=f"{member.display_name}さんが写真を登録"
-        )
-
-    async def delete_photo(self, *, room_id: str, uid: str) -> Room:
-        room = await self.get_room(room_id)
-        member = self._member(room, uid)
-        deleted = await self._delete_photo_object(room, member)
-
-        await self.audit(
-            room_id=room.room_id,
-            actor=uid,
-            action=AuditAction.photo_delete,
-            target=uid,
-            detail={"deleted_objects": deleted},
-        )
-        return await self.advance(
-            room, reason=f"{member.display_name}さんが写真を削除"
         )
 
     async def run_try_on(

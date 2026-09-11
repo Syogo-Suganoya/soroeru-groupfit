@@ -212,21 +212,8 @@
       </div>
     </div>
 
-    <div class="step" id="step-photo">
-      <div class="step-no">2</div>
-      <div class="step-body">
-        <h3>写真を登録する<span class="tag" style="margin-left:6px">任意</span></h3>
-        <p id="photo-desc"></p>
-        <div class="row" style="margin-bottom:4px">
-          <input type="file" id="photo-file" accept="image/jpeg,image/png" hidden>
-          <button class="ghost" id="btn-photo">写真を選ぶ</button>
-          <button class="ghost" id="btn-photo-del" hidden>写真を削除</button>
-        </div>
-      </div>
-    </div>
-
     <div class="step" id="step-fit">
-      <div class="step-no">3</div>
+      <div class="step-no">2</div>
       <div class="step-body">
         <h3>試着して衣装を決める</h3>
         <p id="fit-desc">候補を出して、着るものを選びます。</p>
@@ -452,14 +439,6 @@ async function renderMine(meMember) {
   $('btn-consent').textContent = consented ? '同意を撤回する' : '同意する';
   $('btn-consent').className = consented ? 'ghost' : '';
 
-  const hasPhoto = meMember.has_photo;
-  $('step-photo').className = 'step ' + (hasPhoto ? 'done' : '');
-  $('photo-desc').textContent = hasPhoto
-    ? '登録ずみです。イベント後の自動削除まで、このルームの中だけで使われます。'
-    : '顔と全身が写った写真を登録すると、試着があなたの写真で作られます。登録しなくてもイラストで進められます。';
-  $('btn-photo').textContent = hasPhoto ? '写真を撮り直す' : '写真を選ぶ';
-  show('btn-photo-del', hasPhoto);
-
   $('step-fit').className = 'step ' + (decided ? 'done' : (consented ? 'now' : ''));
   $('fit-desc').textContent = decided
     ? `いまの選択: ${meMember.selected_garment.name}`
@@ -482,30 +461,6 @@ $('btn-consent').onclick = async () => {
   const now = room.members.find(m => m.uid === me).consent_granted;
   if (now && !confirm('同意を撤回すると、集合プレビューからあなたが消え、試着画像も削除されます。よろしいですか？')) return;
   await api(`/api/rooms/${roomId}/members/${me}/consent`, {method:'POST', body: JSON.stringify({granted: !now})});
-  await refresh();
-};
-
-$('btn-photo').onclick = () => $('photo-file').click();
-
-$('photo-file').onchange = async e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const b = $('btn-photo'); b.disabled = true; b.textContent = '送信中…';
-  try {
-    const body = new FormData();
-    body.append('file', file);
-    // FormData のときは Content-Type をブラウザに決めさせる（境界文字列が要る）
-    const res = await fetch(`/api/rooms/${roomId}/members/${me}/photo`, {method:'POST', body});
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.detail || res.status);
-    await refresh();
-  } catch (err) { alert(err.message); }
-  finally { b.disabled = false; e.target.value = ''; }
-};
-
-$('btn-photo-del').onclick = async () => {
-  if (!confirm('登録した写真を削除します。よろしいですか？')) return;
-  await api(`/api/rooms/${roomId}/members/${me}/photo`, {method:'DELETE'});
   await refresh();
 };
 

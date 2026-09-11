@@ -100,7 +100,6 @@ class MemberView(BaseModel):
     state: str
     consent_granted: bool
     composed_in_preview: bool  # False ならプレビューではシルエット
-    has_photo: bool = False  # 写真の有無だけを返す。参照URLは本人以外に出さない。
     unread_notifications: int = 0
     # 確定衣装は集合プレビューに現れるため全員に見せる。試着の途中経過は見せない。
     selected_garment: Garment | None = None
@@ -150,7 +149,6 @@ class RoomView(BaseModel):
                     state=m.state.value,
                     consent_granted=m.consent.granted,
                     composed_in_preview=m.uid in composed,
-                    has_photo=m.photo_ref is not None,
                     unread_notifications=unread.get(m.uid, 0),
                     selected_garment=fitting.selected.garment if fitting and fitting.selected else None,
                 )

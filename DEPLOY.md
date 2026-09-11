@@ -30,7 +30,7 @@ CI からの継続デプロイは「C. GitHub Actions」にある（**有効**�
 | Artifact Registry | コンテナイメージの置き場 |
 | Firestore（Native モード） | ルーム・同意状態 |
 | Cloud Storage バケット | ルーム内一時画像 |
-| Secret Manager | Gemini / YouCam のキー |
+| Secret Manager | Gemini のキー |
 | サービスアカウント `soroeru-run` | Cloud Run の実行 ID |
 | Cloud Scheduler ジョブ | TTL 到来ルームの掃引（設計書 §7-2） |
 
@@ -108,13 +108,7 @@ echo '{"rule":[{"action":{"type":"Delete"},"condition":{"age":30}}]}' > /tmp/lif
 printf 'あなたのGeminiキー' | gcloud secrets create gemini-api-key --data-file=-
 ```
 
-```bash
-printf 'あなたのYouCamキー' | gcloud secrets create youcam-api-key --data-file=-
-```
-
-YouCam のキーは [API コンソール](https://yce.makeupar.com/api-console/en/api-keys/)で発行する
-`sk-` で始まるもの。現行のAPIは Bearer 認証だけを使うため、
-旧 S2S 方式の secret key は登録しなくてよい。
+外部APIは Gemini だけなので、登録するシークレットもこれ1つ。
 
 ## A-5. サービスアカウントを作って権限を付ける
 
@@ -140,21 +134,17 @@ gcloud storage buckets add-iam-policy-binding gs://${BUCKET} --member="serviceAc
 gcloud projects add-iam-policy-binding ${PROJECT_ID} --member="serviceAccount:${SA_EMAIL}" --role="roles/logging.logWriter"
 ```
 
-シークレットは**1つずつ**権限を付ける。付け忘れると A-6 のデプロイが
-`Permission denied on secret: .../youcam-api-key/versions/latest` で失敗する。
+シークレットにも権限を付ける。付け忘れると A-6 のデプロイが
+`Permission denied on secret: .../gemini-api-key/versions/latest` で失敗する。
 
 ```bash
 gcloud secrets add-iam-policy-binding gemini-api-key --member="serviceAccount:${SA_EMAIL}" --role="roles/secretmanager.secretAccessor"
 ```
 
-```bash
-gcloud secrets add-iam-policy-binding youcam-api-key --member="serviceAccount:${SA_EMAIL}" --role="roles/secretmanager.secretAccessor"
-```
-
-付いているか確かめる（`soroeru-run@...` が2件とも出ること）:
+付いているか確かめる（`soroeru-run@...` が出ること）:
 
 ```bash
-for s in gemini-api-key youcam-api-key; do echo "== $s"; gcloud secrets get-iam-policy $s --format='value(bindings.members)'; done
+gcloud secrets get-iam-policy gemini-api-key --format='value(bindings.members)'
 ```
 
 ## A-6. デプロイする
@@ -166,21 +156,16 @@ A-4 でシークレットを登録し、A-5 で `secretAccessor` を付けてあ
 `--set-secrets` で実キーを環境変数に流し込む。
 
 ```bash
-gcloud run deploy ${SERVICE} --source . --region ${REGION} --service-account ${SA_EMAIL} --allow-unauthenticated --set-env-vars "APP_ENV=prod,DB_DRIVER=firestore,STORAGE_DRIVER=gcs,GCS_BUCKET=${BUCKET},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},NOTIFY_CHANNEL=in_app,GEMINI_MODE=live,YOUCAM_MODE=live,GEMINI_MODEL=gemini-3.7-flash" --set-secrets "GEMINI_API_KEY=gemini-api-key:latest,YOUCAM_API_KEY=youcam-api-key:latest"
+gcloud run deploy ${SERVICE} --source . --region ${REGION} --service-account ${SA_EMAIL} --allow-unauthenticated --set-env-vars "APP_ENV=prod,DB_DRIVER=firestore,STORAGE_DRIVER=gcs,GCS_BUCKET=${BUCKET},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},NOTIFY_CHANNEL=in_app,GEMINI_MODE=live,GEMINI_MODEL=gemini-3.7-flash" --set-secrets "GEMINI_API_KEY=gemini-api-key:latest"
 ```
 
 `--allow-unauthenticated` は誰でもURLを開ける状態にする。招待URLを配る性質上デモではこれでよいが、
 ルームIDを知っていれば誰でも見られる点は理解した上で使う。
 
-**外部APIは障害時にローカル実装へ落ちる。** キーが失効していてもルームは進むが、
-**黙って落ちる**ので、デプロイしたら実際に試着して結果を目で確認すること。
-
-- **Gemini**: live で効くのは総評文とドレスコード解釈の自然さ。色かぶり・フォーマル度の
-  判定はローカル計算のままで、Gemini が落ちても警告は出続ける（[app/ports/llm.py](app/ports/llm.py)）。
-- **YouCam**: 本人が写真を登録した衣装だけ実APIで試着する。
-  **既定のカタログには衣装の参考画像（`reference_image_url`）が入っていない**ため、
-  live にしただけでは実試着は起きない。[app/domain/catalog.py](app/domain/catalog.py) に
-  実物の衣装画像URLを入れること。
+**Gemini は障害時に stub 出力へ落ちる。** キーが失効していてもルームは進むが、**黙って落ちる**
+ので、デプロイしたら総評文が出ているか目で確認すること。live で効くのは総評文とドレスコード解釈の
+自然さだけで、色かぶり・フォーマル度の判定はローカル計算のままなので警告は出続ける
+（[app/ports/llm.py](app/ports/llm.py)）。
 
 ## A-7. URL を設定に反映する（2回目のデプロイ）
 
@@ -284,8 +269,6 @@ curl -s ${URL}/health
 
 1. 検索窓に「Secret Manager」→ **シークレットを作成**
 2. 名前 `gemini-api-key`、シークレットの値に実キーを貼る → **シークレットを作成**
-3. 同様に `youcam-api-key` を作る（値は [API コンソール](https://yce.makeupar.com/api-console/en/api-keys/)
-   で発行する `sk-` で始まるキー）
 
 ## B-5. サービスアカウントを作る
 
@@ -302,13 +285,12 @@ curl -s ${URL}/health
 6. プリンシパルに `soroeru-run@soroeru-groupfit.iam.gserviceaccount.com`、ロールに
    **Storage オブジェクト管理者** → **保存**
 
-シークレットへの権限も個別に付ける。**`gemini-api-key` と `youcam-api-key` の両方**に
-必要で、片方を忘れると B-6 のデプロイが「シークレットへのアクセスが拒否されました」で失敗する:
+シークレットへの権限も付ける。忘れると B-6 のデプロイが
+「シークレットへのアクセスが拒否されました」で失敗する:
 
 7. Secret Manager で `gemini-api-key` を開き、**権限**タブ → **アクセスを許可**
 8. プリンシパルに `soroeru-run@soroeru-groupfit.iam.gserviceaccount.com`、ロールに
    **Secret Manager のシークレット アクセサー** → **保存**
-9. `youcam-api-key` にも 7〜8 を繰り返す
 
 ## B-6. デプロイする
 
@@ -333,11 +315,10 @@ curl -s ${URL}/health
      | `GOOGLE_CLOUD_PROJECT` | `soroeru-groupfit` |
      | `NOTIFY_CHANNEL` | `in_app` |
      | `GEMINI_MODE` | `live` |
-     | `YOUCAM_MODE` | `live` |
      | `GEMINI_MODEL` | `gemini-3.7-flash` |
 
-   - 同じタブの**シークレットを参照**から `GEMINI_API_KEY` ← `gemini-api-key`、
-     `YOUCAM_API_KEY` ← `youcam-api-key` を割り当てる（バージョンは `latest`）
+   - 同じタブの**シークレットを参照**から `GEMINI_API_KEY` ← `gemini-api-key`
+     を割り当てる（バージョンは `latest`）
    - **コンテナ**タブ → 集合プレビューと記念ムービーの生成に時間がかかるため、
      リクエストのタイムアウトを `300` 秒、メモリを `1 GiB` にする
 6. **作成**
@@ -390,7 +371,7 @@ curl -s ${URL}/health
    ローカルと同じ compose を使うので、CI 専用の環境定義を持たない
 2. **deploy**: Workload Identity Federation で認証 → `gcloud run deploy --source .`
    → 確定したURLを `PUBLIC_BASE_URL` に反映 → `/health` で `db` / `storage` と
-   `gemini` / `youcam` が live を向いているかまで検証
+   `gemini` が live を向いているかまで検証
 
 ## 初回に必要な設定
 

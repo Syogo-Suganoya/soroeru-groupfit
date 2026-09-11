@@ -116,7 +116,6 @@ class Member(BaseModel):
     is_organizer: bool = False
     consent: Consent = Field(default_factory=Consent)
     state: MemberState = MemberState.invited
-    photo_ref: str | None = None  # ルーム内一時ストレージの参照
 
     @property
     def composable(self) -> bool:
@@ -148,8 +147,6 @@ class Garment(BaseModel):
     has_fur: bool = False
     price_yen: int = 0
     rental_url: str | None = None
-    # YouCam に渡す参考衣装画像。live 実装はこれが無い衣装を試着できない。
-    reference_image_url: str | None = None
 
 
 class TryOnResult(BaseModel):
@@ -159,7 +156,7 @@ class TryOnResult(BaseModel):
     image_ref: str  # ルーム内ストレージ参照（本人以外にはプレビュー経由でのみ露出）
     tone_match: float = 0.0  # Facial Color Tones Analyzer 由来のパーソナルカラー適合度
     note: str | None = None
-    engine: str = "mock"  # どの試着エンジンで作ったか（mock / youcam）
+    engine: str = "mock"  # どの試着エンジンで作ったか
 
 
 class Fitting(BaseModel):
@@ -398,8 +395,6 @@ class AuditAction(str, Enum):
     member_join = "member_join"
     consent_grant = "consent_grant"
     consent_revoke = "consent_revoke"
-    photo_upload = "photo_upload"
-    photo_delete = "photo_delete"
     tryon = "tryon"
     garment_select = "garment_select"
     preview_compose = "preview_compose"

@@ -136,26 +136,3 @@ def hue_degrees(hex_value: str) -> float:
     _, a, b = hex_to_lab(hex_value)
     h = math.degrees(math.atan2(b, a))
     return h + 360 if h < 0 else h
-
-
-def personal_color_season(
-    skin_hex: str, *, warm_ratio: float = 1.75, light_l: float = 60.0
-) -> str:
-    """肌色の16進値から4シーズン（spring/summer/autumn/winter）を推定する。
-
-    YouCam の AI Facial Color Tones Analyzer は色の16進値までしか返さないため、
-    シーズン分類はこちらで行う。判定軸は次の2つ:
-
-    - **イエベ / ブルベ**: b*（黄-青）と a*（赤-緑）の比。肌の a* b* はどちらも正で、
-      黄みが赤みに対して強いほどイエローベース寄りになる。
-    - **明るい / 深い**: L*（明度）。
-
-    肌色は個人差より照明差のほうが大きく出るため、これは目安であって断定ではない。
-    提示順の並び替えにだけ使い、「あなたは○○です」とは言わない（設計書 §7-3）。
-    """
-    l, a, b = hex_to_lab(skin_hex)
-    warm = b >= a * warm_ratio
-    light = l >= light_l
-    if warm:
-        return "spring" if light else "autumn"
-    return "summer" if light else "winter"

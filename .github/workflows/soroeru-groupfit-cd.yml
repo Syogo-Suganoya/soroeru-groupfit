@@ -86,8 +86,8 @@ jobs:
             --allow-unauthenticated \
             --timeout 300 \
             --memory 1Gi \
-            --set-env-vars "APP_ENV=prod,DB_DRIVER=firestore,STORAGE_DRIVER=gcs,GCS_BUCKET=$BUCKET,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,NOTIFY_CHANNEL=in_app,GEMINI_MODE=live,YOUCAM_MODE=live,GEMINI_MODEL=gemini-3.7-flash" \
-            --set-secrets "GEMINI_API_KEY=gemini-api-key:latest,YOUCAM_API_KEY=youcam-api-key:latest" \
+            --set-env-vars "APP_ENV=prod,DB_DRIVER=firestore,STORAGE_DRIVER=gcs,GCS_BUCKET=$BUCKET,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,NOTIFY_CHANNEL=in_app,GEMINI_MODE=live,GEMINI_MODEL=gemini-3.7-flash" \
+            --set-secrets "GEMINI_API_KEY=gemini-api-key:latest" \
             --quiet
 
       # 招待URLと集合プレビューのURL生成に使うため、確定したURLを流し込む
@@ -111,5 +111,4 @@ jobs:
           echo "$BODY" | grep -q '"db":"firestore"'
           echo "$BODY" | grep -q '"storage":"gcs"'
           echo "$BODY" | grep -q '"gemini":"live"'
-          echo "$BODY" | grep -q '"youcam":"live"'
           echo "### デプロイ完了: $URL" >> "$GITHUB_STEP_SUMMARY"
