@@ -46,7 +46,7 @@ def settings(c: Container = Depends(container)) -> Settings:
     """コンテナが組み立てに使った設定をそのまま返す。
 
     グローバルの `get_settings()` を直接引かないこと。コンテナだけ差し替えたときに
-    「ポートは mock なのに /healthz は live と言う」といった食い違いが起きる。
+    「ポートは mock なのに /health は live と言う」といった食い違いが起きる。
     """
     return c.settings
 
@@ -71,8 +71,10 @@ async def _member_not_found(_, exc: MemberNotFound) -> JSONResponse:
     return JSONResponse(status_code=404, content={"detail": f"メンバーが見つかりません: {exc}"})
 
 
-@app.get("/healthz")
-async def healthz(s: Settings = Depends(settings)) -> dict:
+# パスは /healthz にしないこと。Cloud Run では Google のフロントエンドが
+# /healthz を横取りし、アプリに届く前に 404 を返す。
+@app.get("/health")
+async def health(s: Settings = Depends(settings)) -> dict:
     return {
         "status": "ok",
         "modes": {

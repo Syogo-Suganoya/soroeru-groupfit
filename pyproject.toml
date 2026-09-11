@@ -19,7 +19,6 @@ dependencies = [
 # mock モードでは import されない。live 切替時のみ使用する。
 gcp = [
     "google-genai>=0.5",
-    "google-adk>=0.1",
     "google-cloud-storage>=2.19",
 ]
 dev = ["pytest>=8.0", "pytest-asyncio>=0.23"]

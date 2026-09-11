@@ -102,10 +102,10 @@ jobs:
             --quiet
           echo "URL=$URL" >> "$GITHUB_ENV"
 
-      - name: 起動確認（/healthz）
+      - name: 起動確認（/health）
         run: |
           echo "デプロイ先: $URL"
-          BODY=$(curl -sSf --retry 5 --retry-delay 3 "$URL/healthz" | tee /dev/stderr)
+          BODY=$(curl -sSf --retry 5 --retry-delay 3 "$URL/health" | tee /dev/stderr)
           echo "$BODY" | grep -q '"status":"ok"'
           # 環境変数の設定漏れを検知する（本番はクラウド側と実APIを向く）
           echo "$BODY" | grep -q '"db":"firestore"'

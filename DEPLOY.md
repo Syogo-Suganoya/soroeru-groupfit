@@ -226,7 +226,7 @@ gcloud scheduler jobs create http soroeru-ttl-sweep --location ${REGION} --sched
 ## A-9. 動作確認
 
 ```bash
-curl -s ${URL}/healthz
+curl -s ${URL}/health
 ```
 
 `{"status":"ok","modes":{...}}` が返り、`db` が `firestore`、`storage` が `gcs` になっていればよい。
@@ -369,7 +369,7 @@ curl -s ${URL}/healthz
 
 ## B-9. 動作確認
 
-ブラウザで `<サービスURL>/healthz` を開き、`db` が `firestore`、`storage` が `gcs` に
+ブラウザで `<サービスURL>/health` を開き、`db` が `firestore`、`storage` が `gcs` に
 なっていることを確認する。続けてトップページでルーム作成 → 参加 → 衣装確定 →
 集合プレビュー表示まで通ることを見る。
 
@@ -389,7 +389,7 @@ curl -s ${URL}/healthz
 1. **test**: `docker compose` で Firestore エミュレータを立て、コンテナ内で pytest。
    ローカルと同じ compose を使うので、CI 専用の環境定義を持たない
 2. **deploy**: Workload Identity Federation で認証 → `gcloud run deploy --source .`
-   → 確定したURLを `PUBLIC_BASE_URL` に反映 → `/healthz` で `db` / `storage` と
+   → 確定したURLを `PUBLIC_BASE_URL` に反映 → `/health` で `db` / `storage` と
    `gemini` / `youcam` が live を向いているかまで検証
 
 ## 初回に必要な設定
@@ -486,7 +486,7 @@ WIF はキーレスなので秘密情報ではなく、Variables でよい。
 ### C-4. 動作を確かめる
 
 main に push するか、Actions タブから **Run workflow** を実行する。
-`/healthz` の検証まで通れば、ジョブのサマリーにデプロイ先URLが出る。
+`/health` の検証まで通れば、ジョブのサマリーにデプロイ先URLが出る。
 
 ## 止めたくなったら
 

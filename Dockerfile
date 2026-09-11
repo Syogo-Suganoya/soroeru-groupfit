@@ -12,7 +12,9 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml ./
-RUN pip install --upgrade pip && pip install ".[dev]"
+# gcp は live 用（Gemini / Cloud Storage）。mock では import されないが、
+# 本番イメージに無いと GEMINI_MODE=live / STORAGE_DRIVER=gcs が起動時に落ちる。
+RUN pip install --upgrade pip && pip install ".[dev,gcp]"
 
 COPY app ./app
 COPY web ./web
