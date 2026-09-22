@@ -1,6 +1,6 @@
 """ルーム・監査ログの永続化ポート（メモリ / Firestore）。
 
-設計書 §6 の rooms/{roomId} と audit/{logId} に対応する。
+Firestore の rooms/{roomId} と audit/{logId} に対応する。
 """
 
 from __future__ import annotations
@@ -57,12 +57,12 @@ class MemoryRoomRepository(RoomRepository):
         return log
 
     async def audits(self, room_id: str) -> list[AuditLog]:
-        # 監査ログはルーム削除後も残す（削除の証跡そのものが必要なため §7-4）。
+        # 監査ログはルーム削除後も残す（削除の証跡そのものが必要なため）。
         return [a for a in self._audits if a.room_id == room_id]
 
 
 class FirestoreRoomRepository(RoomRepository):
-    """既定の実装（設計書 §6）。
+    """既定の実装。
 
     ローカルでは Firestore エミュレータ（compose の firestore サービス）に、
     本番では Cloud Run のサービスアカウントで実際の Firestore に接続する。

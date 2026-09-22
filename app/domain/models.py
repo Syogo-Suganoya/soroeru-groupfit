@@ -1,6 +1,6 @@
-"""設計書 §6 のデータモデル（Firestore）。
+"""データモデル（Firestore）。
 
-中核の不変条件は §7-1「同意ベースの合成」。
+中核の不変条件は「同意ベースの合成」。
 集合プレビューに顔を合成してよいのは consent.granted が True のメンバーだけで、
 撤回されたら過去の合成からも即時に消える。この判定は Member.composable に集約し、
 合成エージェント側では再実装しない（型と1メソッドで担保する）。
@@ -28,7 +28,7 @@ def new_id(prefix: str) -> str:
 
 
 class SceneType(str, Enum):
-    """シーンプリセット。MVP は wedding のみ実装（設計書 §9）。"""
+    """シーンプリセット。MVP は wedding のみ実装。"""
 
     wedding = "wedding"
     coming_of_age = "coming_of_age"  # 成人式（MVP外）
@@ -44,7 +44,7 @@ class SceneType(str, Enum):
 
 
 class LightingPreset(str, Enum):
-    """会場のライト環境（設計書 §12 会場ライティング再現）。
+    """会場のライト環境。
 
     集合プレビューを式場の光に寄せて、当日の見え方に近づけるための指定。
     ローカル合成では色調の調整で近似する。
@@ -89,7 +89,7 @@ class EventInfo(BaseModel):
 
 
 class Consent(BaseModel):
-    """§7-1: 合成同意。撤回時刻も残し、監査ログと突き合わせられるようにする。"""
+    """合成同意。撤回時刻も残し、監査ログと突き合わせられるようにする。"""
 
     granted: bool = False
     granted_at: datetime | None = None
@@ -194,7 +194,7 @@ class Severity(str, Enum):
 
 
 class HarmonyWarning(BaseModel):
-    """§7-3: 判定根拠を必ず持たせる。根拠なしの警告は作らない。"""
+    """判定根拠を必ず持たせる。根拠なしの警告は作らない。"""
 
     kind: WarningKind
     severity: Severity
@@ -255,7 +255,7 @@ class ArrangePlan(BaseModel):
 
 
 class Movie(BaseModel):
-    """確定した集合プレビューから作る短い記念ムービー（設計書 §12）。
+    """確定した集合プレビューから作る短い記念ムービー。
 
     合意形成が終わったことを祝う体験のためのもので、判定や手配には影響しない。
     生成は重いので自動では作らず、明示的に依頼されたときだけ作る。
@@ -378,7 +378,7 @@ class Room(BaseModel):
         return counts
 
     def ttl_at(self, days: int) -> datetime:
-        """イベント日 + N 日（§6 ttl）。"""
+        """イベント日 + N 日。"""
         return datetime.combine(
             self.event.event_date, datetime.min.time(), tzinfo=timezone.utc
         ) + timedelta(days=days)
@@ -408,7 +408,7 @@ class AuditAction(str, Enum):
 
 
 class AuditLog(BaseModel):
-    """audit/{logId} — 同意取得・撤回・削除実行の証跡（設計書 §7-4）。"""
+    """audit/{logId} — 同意取得・撤回・削除実行の証跡。"""
 
     log_id: str = Field(default_factory=lambda: new_id("aud"))
     room_id: str | None = None

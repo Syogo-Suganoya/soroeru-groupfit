@@ -1,6 +1,6 @@
 """ソロエル API Gateway（Cloud Run: api）。
 
-エンドポイントは薄く保ち、進行の判断は Orchestrator に委ねる（設計書 §4）。
+エンドポイントは薄く保ち、進行の判断は Orchestrator に委ねる。
 """
 
 from __future__ import annotations
@@ -205,7 +205,7 @@ async def alternatives(
 async def export_member(
     room_id: str, uid: str, o: Orchestrator = Depends(orchestrator)
 ) -> dict:
-    """本人の試着画像のみを書き出す（集合プレビューは対象外・§7-2）。"""
+    """本人の試着画像のみを書き出す（集合プレビューは対象外）。"""
     return {"scope": "self_only", "image_refs": await o.export_member(room_id=room_id, uid=uid)}
 
 
@@ -232,7 +232,7 @@ async def set_lighting(
     o: Orchestrator = Depends(orchestrator),
     s: Settings = Depends(settings),
 ) -> RoomView:
-    """会場の光環境を設定し、集合プレビューを作り直す（設計書 §12）。"""
+    """会場の光環境を設定し、集合プレビューを作り直す。"""
     room = await o.set_lighting(room_id=room_id, lighting=body.lighting)
     return _view(room, s)
 

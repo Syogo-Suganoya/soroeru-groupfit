@@ -1,8 +1,7 @@
-"""シーン別ドレスコードプリセット（設計書 §4）。
+"""シーン別ドレスコードプリセット。
 
-MVP は wedding のみ実装し、他シーンは枠だけ用意する（§9「MVPで捨てるもの」）。
-プリセットを1箇所に閉じ込めることで、成人式・コスプレはここへの追加だけで足りる
-＝ §10「実装品質と拡張性」の担保。
+MVP は wedding のみ実装し、他シーンは枠だけ用意する。
+プリセットを1箇所に閉じ込めることで、成人式・コスプレはここへの追加だけで足りる。
 """
 
 from __future__ import annotations
@@ -93,7 +92,7 @@ PRESETS: dict[SceneType, ScenePreset] = {
         ng_fur=True,
         notes=["白は花嫁の色", "全身黒は弔事を連想", "ファー・アニマル柄は殺生の連想"],
     ),
-    # --- 以下は MVP 外。枠のみ用意（設計書 §9） ---
+    # --- 以下は MVP 外。枠のみ用意 ---
     SceneType.coming_of_age: ScenePreset(
         scene=SceneType.coming_of_age,
         label="成人式",

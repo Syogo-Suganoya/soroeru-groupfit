@@ -9,7 +9,9 @@
 #   GitHub の Actions タブ → このワークフロー → 右上 "..." → Disable workflow。
 #   ファイルを消さずに止められる。恒久的に止めるなら下の `push:` を消す。
 #
-# ■ 認証情報（リポジトリ変数）は DEPLOY.md「C. GitHub Actions」を参照
+# ■ 必要なリポジトリ変数（Settings > Secrets and variables > Actions > Variables）
+#   WIF_PROVIDER            Workload Identity プロバイダのリソース名
+#   DEPLOY_SERVICE_ACCOUNT  デプロイ用サービスアカウントのメールアドレス
 
 name: soroeru-groupfit CD
 
@@ -19,7 +21,6 @@ on:
     paths-ignore:
       - "**.md"
       - "docs/**"
-      - "_memo/**"
 
   workflow_dispatch:
     inputs:

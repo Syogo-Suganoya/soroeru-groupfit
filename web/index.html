@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>ソロエル — グループ集合試着エージェント</title>
 <meta name="description" content="グループ全員のバーチャル試着を1枚の集合プレビューに合成し、衣装かぶり・浮きを事前に検知します。" />
+<link rel="icon" href="/web/favicon.svg" type="image/svg+xml" />
+<link rel="icon" href="/web/favicon-32.png" sizes="32x32" />
+<link rel="apple-touch-icon" href="/web/apple-touch-icon.png" />
 <link rel="manifest" href="/web/manifest.webmanifest" />
 <meta name="theme-color" content="#ff6f61" />
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;900&display=swap" rel="stylesheet" />
@@ -55,7 +58,7 @@ section:nth-of-type(even) .card{background:var(--bg)}
 .card:nth-child(4n+4) h3{color:var(--lemon)}
 
 /* ---------------- timeline ---------------- */
-.tl{list-style:none;max-width:660px;margin:0 auto}
+.tl{list-style:none;max-width:760px;margin:0 auto}
 .tl li{position:relative;padding:0 0 26px 56px}
 .tl li::before{content:"";position:absolute;left:17px;top:8px;bottom:-4px;width:6px;
   border-radius:3px;background:linear-gradient(180deg,var(--coral),var(--mint),var(--sky))}
@@ -69,6 +72,10 @@ section:nth-of-type(even) .card{background:var(--bg)}
 .tl li:nth-child(6)::after{border-color:var(--mint)}
 .tl b{display:block}
 .tl small{color:var(--sub);line-height:1.8;display:block}
+/* 画面の写し。撮ったときの幅（CSS px）で出し、狭い画面では縮める */
+.shot{margin:12px 0 6px;display:inline-block;max-width:100%;border:2px solid var(--line);
+  border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 8px 22px rgba(69,63,60,.08)}
+.shot img{display:block;max-width:100%;height:auto}
 
 /* ---------------- governance ---------------- */
 .gov{max-width:680px;margin:0 auto 14px;background:#fff;border:2px dashed var(--coral);
@@ -137,14 +144,26 @@ footer a{color:var(--coral);text-decoration:none;font-weight:700;margin:0 8px}
 
 <section><div class="wrap">
   <h2><span>使い方 — 友人4人でお呼ばれ</span></h2>
-  <p class="lead">幹事がルームを作り、あとは各自のペースで進みます。</p>
+  <p class="lead">さおりさんが幹事になって、4人で結婚式に出る場面です。画像はすべて実際の画面です。</p>
   <ol class="tl">
-    <li><b>幹事がルームを作る</b><small>イベント名・開催日・ドレスコードを設定。会場のライティングもここで選べます</small></li>
-    <li><b>URLでメンバーを招待する</b><small>発行された招待URLを共有。参加者はインストールなしで開けます</small></li>
-    <li><b>各自が合成に同意する</b><small>顔を出すかは本人が決めます。同意しない場合はシルエットのまま参加でき、同意はいつでも撤回できます</small></li>
-    <li><b>試着して衣装を決める</b><small>候補を試着して確定。パーソナルカラーとの相性も表示されます</small></li>
-    <li><b>かぶり・浮きを確認する</b><small>誰かが決めるたびにプレビューが作り直され、かぶりがあれば当事者に通知。代替案もその場で出ます</small></li>
-    <li><b>手配して当日を迎える</b><small>全員確定でレンタル先のリンクがまとまり、未確定の人には自動でリマインドが飛びます</small></li>
+    <li><b>幹事がルームを作る</b><small>イベント名・開催日・ドレスコードを入れます。会場のライティングもここで選べます</small>
+      <div class="shot"><img src="/web/shots/01-create.png" width="438" height="654" loading="lazy"
+        alt="ルームを作る画面。イベント名、開催日、幹事の名前、ドレスコード、会場のライティングを入力し、ルームを作成ボタンを押す" /></div></li>
+    <li><b>招待URLから参加する</b><small>届いたURLを開いて、自分の名前を選ぶだけです。インストールは要りません</small>
+      <div class="shot"><img src="/web/shots/02-enter.png" width="464" height="452" loading="lazy"
+        alt="あなたはどなたですか、と尋ねる画面。さおり・みずき・あかね・ゆいの4人が並び、それぞれ衣装ずみか衣装まだかが出ている" /></div></li>
+    <li><b>同意して、試着して決める</b><small>顔を出すかは本人が決め、いつでも撤回できます。候補を試着して1着に決めます。似合い度は並び順の目安です</small>
+      <div class="shot"><img src="/web/shots/03-fitting.png" width="932" height="711" loading="lazy"
+        alt="みずきさんの画面。1 集合プレビューに参加する（同意ずみ）、2 試着して衣装を決める、の2ステップがあり、ドレスの候補が3着並んで似合い度が出ている" /></div></li>
+    <li><b>かぶりはその場で知らせる</b><small>誰かが決めるたびにプレビューが作り直され、かぶった本人にだけ色差の数値つきで届きます。同意していないゆいさんはシルエットのままです</small>
+      <div class="shot"><img src="/web/shots/04-harmony.png" width="900" height="998" loading="lazy"
+        alt="集合プレビューに4人が並び、右端のゆいさんはグレーのシルエット。その下に、さおりさんとみずきさんの色が近すぎるという指摘と、色差などの数値、お知らせが出ている" /></div></li>
+    <li><b>幹事は全体を見渡す</b><small>誰が未確定・未同意かが一目でわかります。未確定の人へのリマインドもここから送れます</small>
+      <div class="shot"><img src="/web/shots/05-organizer.png" width="932" height="722" loading="lazy"
+        alt="幹事のさおりさんの画面。みんなの進み具合に4人の衣装と合成OK・確定のタグが並び、ゆいさんだけ未同意・未確定。下にグループ全体の指摘がある" /></div></li>
+    <li><b>全員そろったら仕上げる</b><small>会場の光に寄せて見え方を確かめ、記念ムービーを作れます</small>
+      <div class="shot"><img src="/web/shots/06-finish.png" width="900" height="680" loading="lazy"
+        alt="仕上げの画面。会場のライティングにホテル宴会場（夜）が選ばれ、記念ムービーを作るボタンと、夜の光で色味が落ち着いた4人の集合プレビューのムービーが出ている" /></div></li>
   </ol>
 </div></section>
 

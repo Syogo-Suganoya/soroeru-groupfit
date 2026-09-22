@@ -1,6 +1,6 @@
 """API のリクエスト / レスポンススキーマ。
 
-レスポンスでは「誰の顔が合成されているか」を明示し、同意状態を常に返す（§7-3）。
+レスポンスでは「誰の顔が合成されているか」を明示し、同意状態を常に返す。
 """
 
 from __future__ import annotations
@@ -66,7 +66,7 @@ class CandidateView(BaseModel):
 
 
 class FittingView(BaseModel):
-    """本人の試着結果。ルーム全体のビューには含めない（§7-2）。"""
+    """本人の試着結果。ルーム全体のビューには含めない。"""
 
     member_uid: str
     candidates: list[CandidateView] = Field(default_factory=list)

@@ -116,7 +116,7 @@ async def test_audits_are_scoped_to_the_room_and_ordered(repo):
 
 
 async def test_audit_survives_room_deletion(repo):
-    """削除の証跡そのものが必要なので、ルームを消しても監査ログは残る（設計書 §7-4）。"""
+    """削除の証跡そのものが必要なので、ルームを消しても監査ログは残る。"""
     room = build_room()
     await repo.save(room)
     await repo.append_audit(

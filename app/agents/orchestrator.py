@@ -1,10 +1,10 @@
-"""Orchestrator（設計書 §4）。
+"""Orchestrator。
 
 ルーム状態が変わるたびに `advance()` が走り、調和判定 → 集合プレビュー再合成 →
 （必要なら）通知・手配、までを自律的に進める。API 層はイベントを渡すだけで、
 進行の判断はここに閉じている。
 
-同意・撤回・削除は必ず監査ログを残す（§7-4）。
+同意・撤回・削除は必ず監査ログを残す。
 """
 
 from __future__ import annotations
@@ -149,7 +149,7 @@ class Orchestrator:
         return room, member
 
     async def set_consent(self, *, room_id: str, uid: str, granted: bool) -> Room:
-        """§7-1: 合成同意の取得・撤回。撤回時は画像実体まで消してから再合成する。"""
+        """合成同意の取得・撤回。撤回時は画像実体まで消してから再合成する。"""
         room = await self.get_room(room_id)
         member = self._member(room, uid)
         member.consent = member.consent.grant() if granted else member.consent.revoke()
@@ -250,7 +250,7 @@ class Orchestrator:
     # ------------------------------------------------------------- 自律進行
 
     async def advance(self, room: Room, *, reason: str = "") -> Room:
-        """ルーム状態駆動の自律進行（設計書 §4 Orchestrator）。
+        """ルーム状態駆動の自律進行。
 
         1. 調和判定（確定衣装がある人だけ）
         2. 集合プレビューを再合成（同意者のみ顔合成）
@@ -365,7 +365,7 @@ class Orchestrator:
     # ------------------------------------------------------------- ライティング・記念
 
     async def set_lighting(self, *, room_id: str, lighting: LightingPreset) -> Room:
-        """会場の光環境を設定し、集合プレビューを作り直す（設計書 §12）。"""
+        """会場の光環境を設定し、集合プレビューを作り直す。"""
         room = await self.get_room(room_id)
         room.event.lighting = lighting
         return await self.advance(room, reason=f"ライティングを{lighting.label}に変更")
@@ -400,7 +400,7 @@ class Orchestrator:
         return self.harmony_agent.alternatives(room, uid=uid)
 
     async def export_member(self, *, room_id: str, uid: str) -> list[str]:
-        """§7-2: エクスポートは本人の分のみ。集合プレビューは含めない。"""
+        """エクスポートは本人の分のみ。集合プレビューは含めない。"""
         room = await self.get_room(room_id)
         fitting = room.fittings.get(uid)
         refs = [c.image_ref for c in fitting.candidates] if fitting else []
@@ -416,7 +416,7 @@ class Orchestrator:
     # ------------------------------------------------------------- 消去
 
     async def purge(self, *, room_id: str, actor: str = "system", reason: str = "manual") -> dict:
-        """§7-2: ルーム単位の完全消去。監査ログだけは削除の証跡として残す。"""
+        """ルーム単位の完全消去。監査ログだけは削除の証跡として残す。"""
         room = await self.get_room(room_id)
         deleted = await self.storage.delete_prefix(room_id=room_id)
         await self.repo.delete(room_id)

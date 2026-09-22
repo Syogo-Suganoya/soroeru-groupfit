@@ -1,4 +1,4 @@
-"""調和判定（設計書 §4）のテスト。判定は純関数なので LLM 抜きで検証できる。"""
+"""調和判定のテスト。判定は純関数なので LLM 抜きで検証できる。"""
 
 from __future__ import annotations
 
@@ -51,7 +51,7 @@ def test_color_clash_between_two_navies():
     report = evaluate(room, **THRESHOLDS)
     clashes = [w for w in report.warnings if w.kind == WarningKind.color_clash]
     assert len(clashes) == 1
-    # §7-3: 根拠の数値を必ず持つ
+    # 根拠の数値を必ず持つ
     assert clashes[0].evidence["delta_e_2000"] < 12.0
     assert len(clashes[0].member_uids) == 2
 

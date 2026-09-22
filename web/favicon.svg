@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="ソロエル">
+  <title>ソロエル</title>
+  <!--
+    4人が足もとを揃えて並ぶ。紹介ページの集合プレビューと同じ形と4色を使う。
+    小さく表示されると肌色の頭は背景に溶けるため、頭も衣装と同じ色で塗る。
+  -->
+  <rect width="32" height="32" rx="7" fill="#fdf8f4"/>
+  <g>
+    <circle cx="5.5" cy="11.2" r="2.4" fill="#ff6f61"/>
+    <path d="M2.5 26v-8a3 3 0 0 1 6 0v8z" fill="#ff6f61"/>
+    <circle cx="12.5" cy="11.2" r="2.4" fill="#3ecfa5"/>
+    <path d="M9.5 26v-8a3 3 0 0 1 6 0v8z" fill="#3ecfa5"/>
+    <circle cx="19.5" cy="11.2" r="2.4" fill="#5aa7e8"/>
+    <path d="M16.5 26v-8a3 3 0 0 1 6 0v8z" fill="#5aa7e8"/>
+    <circle cx="26.5" cy="11.2" r="2.4" fill="#f0b72f"/>
+    <path d="M23.5 26v-8a3 3 0 0 1 6 0v8z" fill="#f0b72f"/>
+  </g>
+  <path d="M3 27.6h26" stroke="#453f3c" stroke-width="1.3" stroke-linecap="round"/>
+</svg>

@@ -1,4 +1,4 @@
-"""色差計算（CIEDE2000）。設計書 §4「色かぶり」判定の数値的な根拠。
+"""色差計算（CIEDE2000）。「色かぶり」判定の数値的な根拠。
 
 外部依存を増やさないため sRGB → XYZ → CIE Lab → ΔE00 を自前で実装する。
 判定根拠として UI に出す値なので、途中の L*a*b* もそのまま返せるようにしてある。
@@ -132,7 +132,7 @@ def is_blackish(hex_value: str, *, l_max: float = 25.0, chroma_max: float = 12.0
 
 
 def hue_degrees(hex_value: str) -> float:
-    """色相環表示用（§7-3 で UI に根拠として出す）。"""
+    """色相環表示用（UI に根拠として出す）。"""
     _, a, b = hex_to_lab(hex_value)
     h = math.degrees(math.atan2(b, a))
     return h + 360 if h < 0 else h

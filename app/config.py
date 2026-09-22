@@ -13,7 +13,7 @@ class Settings(BaseSettings):
 
     app_env: str = "dev"
 
-    # 外部API接続の切替（設計書 §5）
+    # 外部API接続の切替
     gemini_mode: Mode = "mock"
 
     # 通知チャネル。既定はアプリ内通知（外部送信なし）。
@@ -33,13 +33,13 @@ class Settings(BaseSettings):
 
     public_base_url: str = "http://localhost:8080"
 
-    # --- 調和判定のしきい値（設計書 §4「調和判定ロジック」） ---
+    # --- 調和判定のしきい値 ---
     # CIEDE2000 色差がこれ未満のペアを「色かぶり」として警告する。
     color_clash_delta_e: float = 12.0
     # フォーマル度（1-5）がグループ中央値からこれ以上離れたら「浮き」。
     formality_gap_threshold: float = 2.0
 
-    # --- ガバナンス（設計書 §7） ---
+    # --- ガバナンス ---
     # イベント日 + N 日で全画像・ルームを削除する。
     ttl_days_after_event: int = 7
     consent_policy: str = "consent-based-composition; room-scoped; ttl-purge"

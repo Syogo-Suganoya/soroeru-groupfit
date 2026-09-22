@@ -1,4 +1,4 @@
-"""ルーム進行と、設計書 §7 のガバナンス要件のテスト。"""
+"""ルーム進行と、ガバナンス要件（同意・削除・監査）のテスト。"""
 
 from __future__ import annotations
 
@@ -59,7 +59,7 @@ async def test_consent_revocation_removes_member_from_preview_and_storage(
 
     room = await orchestrator.set_consent(room_id=room.room_id, uid=uid, granted=False)
 
-    # 過去の合成からも即時除去され、画像実体も消えている（§7-1）
+    # 過去の合成からも即時除去され、画像実体も消えている
     assert uid not in room.preview.current.composed_uids
     assert uid in room.preview.current.silhouette_uids
     assert not fitting_dir.exists()

@@ -24,7 +24,7 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.7-flash}
       LINE_CHANNEL_ACCESS_TOKEN: ${LINE_CHANNEL_ACCESS_TOKEN:-}
-      # 調和判定のしきい値（設計書 §4）
+      # 調和判定のしきい値
       COLOR_CLASH_DELTA_E: ${COLOR_CLASH_DELTA_E:-12}
       FORMALITY_GAP_THRESHOLD: ${FORMALITY_GAP_THRESHOLD:-2}
       TTL_DAYS_AFTER_EVENT: ${TTL_DAYS_AFTER_EVENT:-7}
@@ -51,6 +51,27 @@ services:
     image: soroeru-groupfit-diagram
     volumes:
       - .:/work
+
+  # 紹介ページ・README 用の画面の写し（`GEMINI_MODE=mock docker compose --profile shots run --rm shots`）
+  # アイコンの書き出しも同じイメージで行う（`... run --rm shots docs/icons.js`）
+  shots:
+    profiles: ["shots"]
+    build:
+      context: ./docs/shots
+    image: soroeru-groupfit-shots
+    user: root
+    working_dir: /work
+    environment:
+      BASE_URL: http://api:8080
+      NODE_PATH: /usr/src/app/node_modules
+      TZ: Asia/Tokyo
+    entrypoint: ["node"]
+    command: ["docs/shots.js"]
+    volumes:
+      - .:/work
+    depends_on:
+      api:
+        condition: service_healthy
 
   # ローカルでも本番と同じ Firestore 経路で動かすため、既定で起動する
   firestore:
