@@ -61,6 +61,11 @@ jobs:
     runs-on: ubuntu-latest
     # push は常にデプロイ。手動実行は deploy を選んだときだけ。
     if: github.event_name == 'push' || inputs.deploy
+    # リポジトリのトップ右側の Deployments に production として出す。
+    # URL はデプロイ後に確定するので、下の「PUBLIC_BASE_URL を反映」の出力を使う。
+    environment:
+      name: production
+      url: ${{ steps.url.outputs.url }}
     permissions:
       contents: read
       id-token: write # Workload Identity Federation に必要
@@ -93,6 +98,7 @@ jobs:
 
       # 招待URLと集合プレビューのURL生成に使うため、確定したURLを流し込む
       - name: PUBLIC_BASE_URL を反映
+        id: url
         run: |
           URL=$(gcloud run services describe "$SERVICE" \
             --project "$PROJECT_ID" --region "$REGION" \
@@ -102,6 +108,7 @@ jobs:
             --update-env-vars "PUBLIC_BASE_URL=$URL" \
             --quiet
           echo "URL=$URL" >> "$GITHUB_ENV"
+          echo "url=$URL" >> "$GITHUB_OUTPUT" # environment.url が参照する
 
       - name: 起動確認（/health）
         run: |
