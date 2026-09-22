@@ -14,7 +14,6 @@ from app.ports.messaging import InAppMessagingPort
 from app.ports.repository import MemoryRoomRepository
 from app.ports.storage import LocalStoragePort
 from app.ports.tryon import MockTryOnPort
-from app.ports.video import LocalVideoPort
 
 
 def build_settings(**overrides) -> Settings:
@@ -56,7 +55,6 @@ def orchestrator(settings, messaging) -> Orchestrator:
         llm=StubLlmPort(),
         messaging=messaging,
         compositor=LocalCompositor(),
-        video=LocalVideoPort(),
     )
 
 

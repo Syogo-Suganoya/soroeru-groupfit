@@ -16,7 +16,6 @@ from app.ports.repository import (
 )
 from app.ports.storage import GcsStoragePort, LocalStoragePort, StoragePort
 from app.ports.tryon import MockTryOnPort, TryOnPort
-from app.ports.video import LocalVideoPort, VideoPort
 
 
 def build_storage(s: Settings) -> StoragePort:
@@ -51,10 +50,6 @@ def build_compositor(s: Settings) -> CompositorPort:
     return LocalCompositor()
 
 
-def build_video(s: Settings) -> VideoPort:
-    return LocalVideoPort()
-
-
 class Container:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
@@ -64,7 +59,6 @@ class Container:
         self.llm = build_llm(settings)
         self.messaging = build_messaging(settings)
         self.compositor = build_compositor(settings)
-        self.video = build_video(settings)
         self.orchestrator = Orchestrator(
             settings=settings,
             repo=self.repo,
@@ -73,7 +67,6 @@ class Container:
             llm=self.llm,
             messaging=self.messaging,
             compositor=self.compositor,
-            video=self.video,
         )
 
 

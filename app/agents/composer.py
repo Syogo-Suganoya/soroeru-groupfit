@@ -48,9 +48,7 @@ class ComposerAgent:
             )
 
         # 誰をシルエットにするかはここで決め切り、合成エンジンには判断を渡さない。
-        png = await self.compositor.compose_group(
-            figures=figures, lighting=room.event.lighting
-        )
+        png = await self.compositor.compose_group(figures=figures)
         revision = (room.preview.current.revision + 1) if room.preview.current else 1
         ref = await self.storage.put(
             room_id=room.room_id,
@@ -65,7 +63,6 @@ class ComposerAgent:
             silhouette_uids=silhouettes,
             reason=reason,
             engine=self.compositor.engine,
-            lighting=room.event.lighting,
         )
 
         history = [*room.preview.history]

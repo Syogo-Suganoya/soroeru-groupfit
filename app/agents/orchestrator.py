@@ -15,7 +15,6 @@ from app.agents.arranger import ArrangerAgent
 from app.agents.composer import ComposerAgent
 from app.agents.fitting import FittingAgent
 from app.agents.harmony_agent import HarmonyAgent
-from app.agents.keepsake import KeepsakeAgent
 from app.config import Settings
 from app.domain import catalog
 from app.domain.models import (
@@ -24,10 +23,8 @@ from app.domain.models import (
     EventInfo,
     Fitting,
     Garment,
-    LightingPreset,
     Member,
     MemberState,
-    Movie,
     Notification,
     Room,
     RoomStatus,
@@ -39,7 +36,6 @@ from app.ports.messaging import MessagingPort
 from app.ports.repository import RoomRepository
 from app.ports.storage import StoragePort
 from app.ports.tryon import TryOnPort
-from app.ports.video import VideoPort
 
 
 class RoomNotFound(Exception):
@@ -63,7 +59,6 @@ class Orchestrator:
         llm: LlmPort,
         messaging: MessagingPort,
         compositor: CompositorPort,
-        video: VideoPort,
     ) -> None:
         self.settings = settings
         self.repo = repo
@@ -71,7 +66,6 @@ class Orchestrator:
         self.messaging = messaging
         self.fitting_agent = FittingAgent(tryon)
         self.composer = ComposerAgent(storage, compositor)
-        self.keepsake = KeepsakeAgent(storage, video)
         self.harmony_agent = HarmonyAgent(
             llm,
             color_clash_delta_e=settings.color_clash_delta_e,
@@ -121,6 +115,11 @@ class Orchestrator:
         organizer = Member(
             display_name=organizer_name, is_organizer=True, state=MemberState.joined
         )
+        # 読み取りは作成時の1回だけにして保存する。判定のたびに LLM に読ませると、
+        # 同じルームなのに日によって NG が変わりうるため。
+        event = event.model_copy(
+            update={"dress_rules": await self.harmony_agent.interpret_dress_code(event.dress_code)}
+        )
         room = Room(event=event, members=[organizer])
         await self.repo.save(room)
         await self.audit(
@@ -131,6 +130,10 @@ class Orchestrator:
                 "scene": event.scene.value,
                 "event_date": event.event_date.isoformat(),
                 "ttl_at": room.ttl_at(self.settings.ttl_days_after_event).isoformat(),
+                # 判定の基準に効くので、誰（どのエンジン）がどう読んだかを残す
+                "dress_rules": (
+                    event.dress_rules.model_dump(mode="json") if event.dress_rules else None
+                ),
             },
         )
         return await self.advance(room, reason="ルーム作成")
@@ -361,38 +364,6 @@ class Orchestrator:
             room.updated_at = now()
             await self.repo.save(room)
         return count
-
-    # ------------------------------------------------------------- ライティング・記念
-
-    async def set_lighting(self, *, room_id: str, lighting: LightingPreset) -> Room:
-        """会場の光環境を設定し、集合プレビューを作り直す。"""
-        room = await self.get_room(room_id)
-        room.event.lighting = lighting
-        return await self.advance(room, reason=f"ライティングを{lighting.label}に変更")
-
-    async def create_movie(self, room_id: str) -> Room:
-        """記念ムービーを作る。重い処理なので依頼されたときだけ動く。"""
-        room = await self.get_room(room_id)
-        room.movie = await self.keepsake.create(room)
-        await self.audit(
-            room_id=room_id,
-            actor=self.keepsake.name,
-            action=AuditAction.movie_create,
-            target=room.movie.movie_ref,
-            detail={
-                "engine": room.movie.engine,
-                "seconds": room.movie.seconds,
-                "source_revision": room.movie.source_revision,
-                # 記念ムービーに写るのは合成に同意している人だけ
-                "composed": room.preview.current.composed_uids if room.preview.current else [],
-            },
-        )
-        room.updated_at = now()
-        await self.repo.save(room)
-        return room
-
-    def movie_availability(self, room: Room) -> tuple[bool, str]:
-        return self.keepsake.can_create(room)
 
     # ------------------------------------------------------------- 提案・出力
 

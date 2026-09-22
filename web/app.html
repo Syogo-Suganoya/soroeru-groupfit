@@ -17,6 +17,7 @@
     --accent: var(--coral);
     /* 注意とNGが同系色にならないよう、warn は琥珀、block は濃い赤にする */
     --warn: #c98a10; --block: #d94f3d; --ok: #2fae8a;
+    --side: 340px;
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink); line-height: 1.8;
@@ -24,20 +25,25 @@
   [hidden] { display: none !important; }
 
   /* ------------------------------------------------ ヘッダ */
-  header { background: var(--accent); color: #fff; padding: 14px 20px; }
-  .head-row { max-width: 900px; margin: 0 auto; display: flex; gap: 12px;
+  header { background: var(--accent); color: #fff; padding: 12px 20px; }
+  .head-row { max-width: 1180px; margin: 0 auto; display: flex; gap: 16px;
     align-items: center; justify-content: space-between; }
-  header h1 { margin: 0; font-size: 17px; font-weight: 900; letter-spacing: .06em; }
-  header .sub { font-size: 12px; opacity: .9; }
-  .who { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-  .who button { background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.5); }
+  .brand { display: flex; align-items: baseline; gap: 14px; min-width: 0; }
+  .brand .logo { margin: 0; font-size: 15px; font-weight: 900; letter-spacing: .08em; opacity: .9; flex: none; }
+  .brand .event { font-size: 18px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .brand .event small { font-size: 12px; font-weight: 500; opacity: .9; margin-left: 8px; }
+  .who { display: flex; align-items: center; gap: 8px; font-size: 13px; flex: none; }
+  .who .me { background: rgba(255,255,255,.18); border-radius: 999px; padding: 3px 12px; font-weight: 700; }
+  .who button { background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.5); padding: 5px 14px; }
   .who button:hover { background: rgba(255,255,255,.3); }
 
-  main { max-width: 900px; margin: 0 auto; padding: 16px; display: grid; gap: 14px; }
+  main { max-width: 1180px; margin: 0 auto; padding: 20px; }
 
   /* ------------------------------------------------ 基本パーツ */
-  .card { background: var(--panel); border: 2px solid var(--line); border-radius: 18px; padding: 18px; }
-  h2 { margin: 0 0 4px; font-size: 15px; font-weight: 900; }
+  .card { background: var(--panel); border: 2px solid var(--line); border-radius: 18px; padding: 18px 20px; }
+  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    flex-wrap: wrap; margin-bottom: 10px; }
+  h2 { margin: 0; font-size: 15px; font-weight: 900; }
   h2 .mark { background: linear-gradient(transparent 62%, #ffe3df 62%); padding: 0 4px; }
   .hint { color: var(--sub); font-size: 12px; margin: 0 0 12px; }
   label { display: block; font-size: 12px; color: var(--sub); margin: 8px 0 4px; }
@@ -53,9 +59,8 @@
   button:disabled { opacity: .45; cursor: default; }
   .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .muted { color: var(--sub); font-size: 13px; }
-  .center { text-align: center; }
 
-  /* ------------------------------------------------ 入室 */
+  /* ------------------------------------------------ 作成・入室（ダッシュボードの外） */
   .enter { max-width: 460px; margin: 40px auto; }
   .people { display: grid; gap: 8px; margin-top: 10px; }
   .person { display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -66,84 +71,190 @@
   .person small { color: var(--sub); font-weight: 500; font-size: 12px; }
   .divider { text-align: center; color: var(--sub); font-size: 12px; margin: 18px 0 10px; }
 
-  /* ------------------------------------------------ プレビュー */
-  /* 人数が少ないと縦長になり画面を占有するため、高さで頭打ちにする */
-  .preview img { width: 100%; max-height: 44vh; object-fit: contain; border-radius: 14px;
-    border: 2px solid var(--line); background: #fff; display: block; }
+  /* ================================================ ダッシュボード
+     重要なもの（いまやること）を左上に大きく置く。
+     左 = 見る・選ぶための広い列、右 = 自分の状況と幹事の道具を積む細い列。 */
+  #dash { display: grid; gap: 16px; }
+
+  /* 数字の帯。細部を開く前に、全体がどこまで進んだかを一目で出す */
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .kpi { background: var(--panel); border: 2px solid var(--line); border-radius: 16px; padding: 12px 16px; }
+  .kpi .k { display: block; font-size: 12px; color: var(--sub); font-weight: 700; }
+  .kpi b { display: block; font-size: 26px; font-weight: 900; line-height: 1.3; }
+  .kpi b small { font-size: 13px; font-weight: 700; color: var(--sub); margin-left: 2px; }
+  .kpi .sub { font-size: 12px; color: var(--sub); }
+  .bar { height: 6px; border-radius: 3px; background: var(--line); margin-top: 6px; overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 3px; background: var(--mint); transition: width .3s; }
+  .kpi.alert b { color: var(--warn); }
+  .kpi.block b { color: var(--block); }
+  .kpi.clear b { color: var(--ok); }
+
+  /* 総評。数字の帯の次に読む文章として、帯のすぐ下に横長で置く。右端は判定に使っている NG */
+  .summary-card { display: grid; grid-template-columns: minmax(0, 1fr) var(--side); gap: 16px;
+    border-color: #cdeee3; background: linear-gradient(100deg, #f2fcf8, #fff 60%); }
+  .summary-card .card-head { margin-bottom: 4px; }
+  .summary-card .by { font-size: 11px; font-weight: 700; color: var(--ok); background: #d9f5ec;
+    border-radius: 999px; padding: 0 9px; line-height: 1.8; }
+  .summary-card .by.stub { color: var(--sub); background: var(--line); }
+  #summary { margin: 0; font-size: 15px; line-height: 1.9; }
+  #summary.pending { font-size: 13px; color: var(--sub); }
+  .rules { border-left: 2px dashed var(--line); padding-left: 16px; font-size: 12px; }
+  .rules .k { color: var(--sub); font-weight: 700; margin-bottom: 4px; }
+  .ngs { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+  .ng { display: inline-flex; align-items: center; gap: 4px; border: 1px solid #f5cec8; background: #fff;
+    border-radius: 8px; padding: 1px 8px; font-weight: 700; color: var(--block); }
+  .ng small { font-weight: 700; font-size: 10px; color: var(--sub); background: var(--bg);
+    border-radius: 6px; padding: 0 5px; }
+  .ng small.spec { color: var(--ok); background: #d9f5ec; }
+  .rules .note { color: var(--sub); margin: 6px 0 0; line-height: 1.6; }
+
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) var(--side); gap: 16px; align-items: start; }
+  .col-main, .col-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+  /* 並び順。1つの値で、広い画面（列の中）と狭い画面（1列）の両方を決める。
+     衣装が決まっていない間は「衣装を選ぶ」を左上に、決まったら集合プレビューを左上に置く。 */
+  #sec-mine { order: 10; }
+  #sec-preview { order: 20; }
+  #sec-my-warn { order: 30; }
+  #sec-my-notif { order: 31; }
+  #sec-fit { order: 40; }
+  #sec-my-arrange { order: 50; }
+  #sec-roster { order: 60; }
+  #sec-all-warn { order: 70; }
+  #sec-arrange { order: 80; }
+  #sec-danger { order: 90; }
+  /* 5 は「あなたのすること（10）」より前。1列に畳んだスマホでも、選ぶ場所がいちばん上に来る */
+  .fit-first #sec-fit { order: 5; }
+  .fit-first #sec-preview { order: 40; }
+  /* 自分の分が終わったら、チェックリストは下へ退く（済んだことに一等地を使わない） */
+  .mine-done #sec-mine { order: 85; }
+  /* 幹事は全体を見るのが仕事。進み具合は右列の上、全体の指摘は左列の2番目に上げる */
+  .organizer #sec-roster { order: 15; }
+  .organizer #sec-all-warn { order: 25; }
+
+  /* ------------------------------------------------ 集合プレビュー（主役） */
+  .preview img { width: 100%; max-height: 440px; object-fit: contain; border-radius: 14px;
+    border: 2px solid var(--line); background: #f6f1ec; display: block; }
   .preview-meta { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;
     font-size: 12px; color: var(--sub); margin-top: 8px; }
 
-  /* ------------------------------------------------ 自分のすること */
-  .step { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px dashed var(--line); }
-  .step:last-child { border-bottom: 0; padding-bottom: 0; }
-  .step-no { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid;
-    place-items: center; font-size: 13px; font-weight: 900; background: var(--line); color: var(--sub); }
-  .step.done .step-no { background: var(--mint); color: #fff; }
-  .step.now .step-no { background: var(--coral); color: #fff; }
-  .step-body { flex: 1; min-width: 0; }
-  .step h3 { margin: 0 0 2px; font-size: 14px; font-weight: 700; }
-  .step p { margin: 0 0 8px; font-size: 13px; color: var(--sub); }
-
-  /* ------------------------------------------------ 試着候補 */
-  .fits { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+  /* ------------------------------------------------ 衣装を選ぶ */
+  .fits { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
   .fit { border: 2px solid var(--line); border-radius: 14px; overflow: hidden; background: #fff;
     cursor: pointer; padding: 0; font-family: inherit; color: inherit; text-align: left; }
-  .fit:hover { border-color: var(--mint); }
+  .fit:hover { border-color: var(--mint); background: #fff; }
   .fit.on { border-color: var(--coral); box-shadow: 0 0 0 3px #ffe3df; }
   .fit img { width: 100%; display: block; aspect-ratio: 3/4; object-fit: cover; background: var(--bg); }
   .fit .cap { padding: 8px 10px; }
   .fit .name { font-size: 12px; font-weight: 700; line-height: 1.5; }
   .fit .meta { font-size: 11px; color: var(--sub); }
+  .empty { border: 2px dashed var(--line); border-radius: 14px; padding: 28px 16px;
+    text-align: center; color: var(--sub); font-size: 13px; }
+  /* 左上に来ている間は、ここがいまやることだと枠でも示す */
+  .fit-first #sec-fit { border-color: #ffcfc9; box-shadow: 0 6px 20px rgba(255,111,97,.10); }
+
+  /* ------------------------------------------------ あなたのすること（右列のチェックリスト） */
+  .step { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px dashed var(--line); }
+  .step:last-child { border-bottom: 0; padding-bottom: 0; }
+  .step-no { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid;
+    place-items: center; font-size: 13px; font-weight: 900; background: var(--line); color: var(--sub); }
+  .step.done .step-no { background: var(--mint); color: #fff; }
+  .step.now .step-no { background: var(--coral); color: #fff; }
+  .step-body { flex: 1; min-width: 0; }
+  .step h3 { margin: 0 0 2px; font-size: 14px; font-weight: 700; }
+  .step p { margin: 0 0 8px; font-size: 12px; color: var(--sub); }
+  .step p:last-child { margin-bottom: 0; }
 
   /* ------------------------------------------------ 警告・通知 */
   .warn { border: 2px solid var(--line); border-left: 6px solid var(--warn); padding: 10px 14px;
     background: #fdf7e6; border-radius: 0 14px 14px 0; margin-bottom: 8px; }
+  .warn:last-child { margin-bottom: 0; }
   .warn.block { border-left-color: var(--block); background: #ffe9e5; }
   .warn p { margin: 0 0 4px; font-size: 13px; }
-  .evidence { font-size: 11px; color: var(--sub); font-family: ui-monospace, monospace; word-break: break-all; }
+  .warn .you { font-size: 11px; font-weight: 700; color: var(--block); background: #fff;
+    border-radius: 999px; padding: 0 8px; margin-left: 6px; white-space: nowrap; }
+  /* 判定の根拠。数値を読める形の小さな札にして並べる */
+  .evidence { display: flex; flex-wrap: wrap; gap: 4px 6px; margin-top: 6px; }
+  .ev { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; line-height: 1.6;
+    background: rgba(255,255,255,.75); border: 1px solid var(--line); border-radius: 8px; padding: 1px 8px; }
+  .ev .l { color: var(--sub); }
+  .ev b { font-weight: 700; }
+  .chip { width: 11px; height: 11px; border-radius: 3px; border: 1px solid rgba(0,0,0,.15); display: inline-block; }
   .notif { border: 2px solid var(--line); border-left: 6px solid var(--sky);
     border-radius: 0 14px 14px 0; padding: 10px 14px; margin-bottom: 8px; background: #f4f9fe; }
   .notif.read { border-left-color: var(--line); background: var(--bg); opacity: .55; }
   .notif p { margin: 0 0 2px; font-size: 13px; white-space: pre-wrap; }
   .notif .meta { font-size: 11px; color: var(--sub); }
 
-  /* ------------------------------------------------ 進捗（幹事） */
-  .roster { display: grid; gap: 8px; }
-  .mate { display: flex; align-items: center; gap: 10px; padding: 10px 12px;
-    border: 2px solid var(--line); border-radius: 14px; background: var(--bg); }
-  .mate .nm { font-weight: 700; font-size: 14px; flex: 1; min-width: 0; }
-  .swatch { width: 16px; height: 16px; border-radius: 5px; border: 1px solid rgba(0,0,0,.15); flex: none; }
-  .tag { display: inline-block; font-size: 11px; padding: 1px 10px; border-radius: 999px;
-    background: var(--line); color: var(--sub); font-weight: 700; white-space: nowrap; }
+  /* ------------------------------------------------ みんなの進み具合（幹事） */
+  .roster { display: grid; gap: 6px; }
+  .mate { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 10px;
+    align-items: center; padding: 8px 12px; border: 2px solid var(--line); border-radius: 14px; background: var(--bg); }
+  .mate .nm { font-weight: 700; font-size: 13px; line-height: 1.5; }
+  .mate .nm small { display: block; color: var(--sub); font-weight: 500; font-size: 11px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mate .tags { display: flex; flex-direction: column; gap: 3px; align-items: flex-end; }
+  .swatch { width: 16px; height: 16px; border-radius: 5px; border: 1px solid rgba(0,0,0,.15); }
+  .tag { display: inline-block; font-size: 11px; padding: 0 9px; border-radius: 999px;
+    background: var(--line); color: var(--sub); font-weight: 700; white-space: nowrap; line-height: 1.8; }
   .tag.ok { background: #d9f5ec; color: var(--ok); }
   .tag.no { background: #ffe3df; color: var(--block); }
   .tag.wait { background: #fdf1cf; color: #a8750a; }
 
   /* ------------------------------------------------ 折りたたみ */
   details.card { padding: 0; }
-  details.card > summary { list-style: none; cursor: pointer; padding: 14px 18px;
-    font-size: 14px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+  details.card > summary { list-style: none; cursor: pointer; padding: 12px 18px;
+    font-size: 13px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
   details.card > summary::-webkit-details-marker { display: none; }
   details.card > summary::after { content: "＋"; color: var(--sub); font-weight: 900; }
   details.card[open] > summary::after { content: "－"; }
-  details.card > .inner { padding: 0 18px 18px; }
+  details.card > .inner { padding: 0 18px 16px; font-size: 13px; }
+  details.card > .inner p { margin: 0 0 6px; }
 
-  .banner { border-radius: 14px; padding: 12px 16px; font-size: 13px; font-weight: 700; }
-  .banner.ok { background: #d9f5ec; color: #1c7a5e; }
-  .banner.wait { background: #fdf1cf; color: #8a6205; }
+  /* 作成直後だけ出す招待URL。ダッシュボードの一番上に横長で置く */
+  #sec-created { border-color: #bfeedf; background: #f2fcf8; }
+
+  /* ------------------------------------------------ 狭い画面は1列に畳む。並びは上の order がそのまま効く */
+  @media (max-width: 900px) {
+    .cols { display: flex; flex-direction: column; }
+    .col-main, .col-side { display: contents; }
+    .summary-card { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+    .rules { border-left: 0; border-top: 2px dashed var(--line); padding: 10px 0 0; }
+    .brand { flex-direction: column; gap: 0; }
+    .brand .event { font-size: 16px; }
+  }
+  /* スマホ: 数字の帯は1行に詰め、候補は3着を横に並べて見比べられるようにする */
+  @media (max-width: 600px) {
+    main { padding: 12px; }
+    #dash, .cols { gap: 12px; }
+    .card { padding: 14px; }
+    .kpis { gap: 6px; }
+    .kpi { padding: 8px 8px 9px; border-radius: 12px; }
+    .kpi .k { font-size: 10px; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .kpi b { font-size: 19px; }
+    .kpi b small { font-size: 10px; }
+    .kpi .sub { display: none; }
+    .bar { height: 4px; margin-top: 4px; }
+    .fits { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .fit .cap { padding: 6px 7px; }
+    .fit .name { font-size: 11px; }
+    .fit .meta { font-size: 10px; }
+    .preview img { max-height: 260px; }
+    #summary { font-size: 14px; }
+  }
 </style>
 </head>
 <body>
 
 <header>
   <div class="head-row">
-    <div>
-      <h1>ソロエル</h1>
-      <div class="sub" id="event-line">並んだときの見え方を、当日ではなく事前に。</div>
+    <div class="brand">
+      <h1 class="logo">ソロエル</h1>
+      <div class="event" id="event-line">並んだときの見え方を、当日ではなく事前に。</div>
     </div>
     <div class="who">
-      <span id="who-name" hidden></span>
-      <button class="ghost" id="btn-switch" hidden>切替</button>
+      <span class="me" id="who-name" hidden></span>
+      <button id="btn-switch" hidden>切替</button>
     </div>
   </div>
 </header>
@@ -162,13 +273,6 @@
     <input id="organizer" value="" placeholder="例: さおり" />
     <label for="dresscode">ドレスコード（自由記述・任意）</label>
     <input id="dresscode" value="白NG・ファーNG" />
-    <label for="lighting-new">会場のライティング</label>
-    <select id="lighting-new">
-      <option value="none">指定なし</option>
-      <option value="garden_day">昼のガーデン</option>
-      <option value="hall_evening">ホテル宴会場（夜）</option>
-      <option value="chapel">チャペル</option>
-    </select>
     <div class="row" style="margin-top:16px">
       <button id="btn-create">ルームを作成</button>
     </div>
@@ -191,124 +295,182 @@
     </div>
   </section>
 
-  <!-- ============================ 共通: 集合プレビュー ============================ -->
-  <section class="card" id="sec-preview" hidden>
-    <h2><span class="mark">集合プレビュー</span></h2>
-    <div class="preview"><img id="preview-img" alt="集合プレビュー" /></div>
-    <div class="preview-meta">
-      <span id="consent-note"></span>
-      <span id="preview-rev"></span>
-    </div>
-  </section>
+  <!-- ============================ ダッシュボード ============================ -->
+  <div id="dash" hidden>
 
-  <!-- ============================ 参加者: 自分のすること ============================ -->
-  <section class="card" id="sec-mine" hidden>
-    <h2><span class="mark">あなたのすること</span></h2>
-    <p class="hint" id="mine-hint"></p>
-
-    <div class="step" id="step-consent">
-      <div class="step-no">1</div>
-      <div class="step-body">
-        <h3>集合プレビューに参加する</h3>
-        <p id="consent-desc"></p>
-        <button id="btn-consent"></button>
+    <!-- 幹事: 作成直後だけ出す -->
+    <section class="card" id="sec-created" hidden>
+      <div class="card-head">
+        <h2><span class="mark">ルームを作りました</span></h2>
+        <span class="muted">この招待URLをメンバーに送ってください。名前を選ぶだけで参加できます。</span>
       </div>
+      <div class="row">
+        <input id="created-url" readonly style="flex:1 1 260px" onfocus="this.select()" />
+        <button id="btn-created-copy">コピー</button>
+      </div>
+    </section>
+
+    <!-- 全体の進み具合 -->
+    <div class="kpis" id="kpis">
+      <div class="kpi"><span class="k">衣装の確定</span><b id="kpi-decided"></b>
+        <div class="bar"><i id="kpi-decided-bar"></i></div></div>
+      <div class="kpi"><span class="k">合成への同意</span><b id="kpi-consent"></b>
+        <div class="bar"><i id="kpi-consent-bar"></i></div></div>
+      <div class="kpi" id="kpi-warn-tile"><span class="k">かぶり・浮き</span><b id="kpi-warn"></b>
+        <span class="sub" id="kpi-warn-sub"></span></div>
+      <div class="kpi"><span class="k">開催まで</span><b id="kpi-days"></b>
+        <span class="sub" id="kpi-date"></span></div>
     </div>
 
-    <div class="step" id="step-fit">
-      <div class="step-no">2</div>
-      <div class="step-body">
-        <h3>試着して衣装を決める</h3>
-        <p id="fit-desc">候補を出して、着るものを選びます。</p>
-        <div class="row" style="margin-bottom:10px">
-          <button class="ghost" id="btn-tryon">試着する</button>
-          <button class="ghost" id="btn-alt" hidden>代替案を見る</button>
+    <!-- 全員に出す。指摘の一覧は当事者と幹事にしか見せないが、全体の印象はみんなで共有する -->
+    <section class="card summary-card" id="sec-summary" hidden>
+      <div>
+        <div class="card-head">
+          <h2><span class="mark">グループの総評</span></h2>
+          <span class="by" id="summary-by" hidden></span>
         </div>
-        <div class="fits" id="fits"></div>
+        <p id="summary"></p>
       </div>
+      <div class="rules">
+        <div class="k">判定に使っているNG（<span id="scene-label"></span>）</div>
+        <div class="ngs" id="ng-rules"></div>
+        <p class="note" id="dress-note"></p>
+      </div>
+    </section>
+
+    <div class="cols" id="cols">
+
+      <!-- 左: 見る・選ぶ -->
+      <div class="col-main">
+
+        <section class="card" id="sec-fit" hidden>
+          <div class="card-head">
+            <h2><span class="mark">衣装を選ぶ</span></h2>
+            <div class="row">
+              <button id="btn-tryon">試着する</button>
+              <button class="ghost" id="btn-alt" hidden>代替案を見る</button>
+            </div>
+          </div>
+          <p class="hint" id="fit-desc"></p>
+          <div class="fits" id="fits"></div>
+          <div class="empty" id="fits-empty">「試着する」を押すと、ここに候補が3着並びます。<br>カードを押すと、その衣装に決まります。</div>
+        </section>
+
+        <section class="card" id="sec-preview" hidden>
+          <div class="card-head">
+            <h2><span class="mark">集合プレビュー</span></h2>
+          </div>
+          <div class="preview"><img id="preview-img" alt="集合プレビュー" /></div>
+          <div class="preview-meta">
+            <span id="consent-note"></span>
+            <span id="preview-rev"></span>
+          </div>
+        </section>
+
+        <section class="card" id="sec-all-warn" hidden>
+          <div class="card-head"><h2><span class="mark">グループ全体の指摘</span></h2></div>
+          <div id="all-warnings"></div>
+        </section>
+      </div>
+
+      <!-- 右: 自分の状況と幹事の道具 -->
+      <aside class="col-side">
+
+        <section class="card" id="sec-mine" hidden>
+          <div class="card-head"><h2><span class="mark">あなたのすること</span></h2></div>
+          <p class="hint" id="mine-hint"></p>
+          <!-- 先にやるのは衣装選び。同意は決めたあとでよく、未同意でもシルエットで参加できる -->
+          <div class="step" id="step-fit">
+            <div class="step-no">1</div>
+            <div class="step-body">
+              <h3>衣装を決める</h3>
+              <p id="step-fit-desc"></p>
+            </div>
+          </div>
+          <div class="step" id="step-consent">
+            <div class="step-no">2</div>
+            <div class="step-body">
+              <h3>集合プレビューに参加する</h3>
+              <p id="consent-desc"></p>
+              <button id="btn-consent"></button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card" id="sec-my-warn" hidden>
+          <div class="card-head"><h2><span class="mark">あなたに関係する指摘</span></h2></div>
+          <p class="hint">数値の根拠つきです。納得できなければ従う必要はありません。</p>
+          <div id="my-warnings"></div>
+        </section>
+
+        <section class="card" id="sec-my-notif" hidden>
+          <div class="card-head">
+            <h2><span class="mark">お知らせ</span></h2>
+            <button class="ghost" id="btn-read">既読にする</button>
+          </div>
+          <div id="my-notifs"></div>
+        </section>
+
+        <section class="card" id="sec-my-arrange" hidden>
+          <div class="card-head"><h2><span class="mark">あなたの手配</span></h2></div>
+          <div id="my-arrange"></div>
+        </section>
+
+        <section class="card" id="sec-roster" hidden>
+          <div class="card-head"><h2><span class="mark">みんなの進み具合</span></h2></div>
+          <div class="roster" id="roster"></div>
+          <div class="row" style="margin-top:12px">
+            <button class="ghost" id="btn-remind">未確定の人にリマインド</button>
+            <button class="ghost" id="btn-copy">招待URLをコピー</button>
+          </div>
+        </section>
+
+        <details class="card" id="sec-arrange" hidden>
+          <summary>手配リスト</summary>
+          <div class="inner" id="arrange"></div>
+        </details>
+
+        <details class="card" id="sec-danger" hidden>
+          <summary>ルームを削除</summary>
+          <div class="inner">
+            <p class="hint">全員分の試着画像と集合プレビューが消えます。元に戻せません。
+              なお、イベント日から7日で自動的に削除されるため、急いで消す必要はありません。</p>
+            <button class="danger" id="btn-purge">このルームを完全に削除</button>
+          </div>
+        </details>
+      </aside>
     </div>
-  </section>
-
-  <!-- ============================ 参加者: あなたへのお知らせ ============================ -->
-  <section class="card" id="sec-my-warn" hidden>
-    <h2><span class="mark">あなたに関係する指摘</span></h2>
-    <p class="hint">数値の根拠つきで出しています。納得できなければ従う必要はありません。</p>
-    <div id="my-warnings"></div>
-  </section>
-
-  <section class="card" id="sec-my-notif" hidden>
-    <h2><span class="mark">お知らせ</span></h2>
-    <div id="my-notifs"></div>
-    <div class="row" style="margin-top:8px">
-      <button class="ghost" id="btn-read">既読にする</button>
-    </div>
-  </section>
-
-  <!-- ============================ 参加者: 手配 ============================ -->
-  <section class="card" id="sec-my-arrange" hidden>
-    <h2><span class="mark">あなたの手配</span></h2>
-    <div id="my-arrange"></div>
-  </section>
-
-  <!-- ============================ 幹事: 進捗 ============================ -->
-  <section class="card" id="sec-roster" hidden>
-    <h2><span class="mark">みんなの進み具合</span></h2>
-    <p class="hint" id="roster-hint"></p>
-    <div class="roster" id="roster"></div>
-    <div class="row" style="margin-top:12px">
-      <button class="ghost" id="btn-remind">未確定の人にリマインド</button>
-      <button class="ghost" id="btn-copy">招待URLをコピー</button>
-    </div>
-  </section>
-
-  <!-- ============================ 幹事: 全体の指摘 ============================ -->
-  <section class="card" id="sec-all-warn" hidden>
-    <h2><span class="mark">グループ全体の指摘</span></h2>
-    <div id="all-warnings"></div>
-    <p class="muted" id="summary"></p>
-  </section>
-
-  <!-- ============================ 幹事: 仕上げ ============================ -->
-  <section class="card" id="sec-finish" hidden>
-    <h2><span class="mark">仕上げ</span></h2>
-    <label for="lighting">会場のライティング</label>
-    <select id="lighting">
-      <option value="none">指定なし</option>
-      <option value="garden_day">昼のガーデン</option>
-      <option value="hall_evening">ホテル宴会場（夜）</option>
-      <option value="chapel">チャペル</option>
-    </select>
-    <div class="row" style="margin-top:14px">
-      <button class="ghost" id="btn-movie">記念ムービーを作る</button>
-      <span class="muted" id="movie-note"></span>
-    </div>
-    <div id="movie-box" hidden style="margin-top:10px">
-      <img id="movie-img" alt="記念ムービー" style="width:100%;border-radius:14px;border:2px solid var(--line)" />
-      <video id="movie-video" controls style="width:100%;border-radius:14px" hidden></video>
-    </div>
-  </section>
-
-  <!-- ============================ 幹事: 手配一覧 ============================ -->
-  <details class="card" id="sec-arrange" hidden>
-    <summary>手配リスト</summary>
-    <div class="inner" id="arrange"></div>
-  </details>
-
-  <!-- ============================ 幹事: 削除 ============================ -->
-  <details class="card" id="sec-danger" hidden>
-    <summary>ルームを削除</summary>
-    <div class="inner">
-      <p class="hint">全員分の試着画像と集合プレビューが消えます。元に戻せません。
-        なお、イベント日から7日で自動的に削除されるため、急いで消す必要はありません。</p>
-      <button class="danger" id="btn-purge">このルームを完全に削除</button>
-    </div>
-  </details>
+  </div>
 
 </main>
 
 <script>
 const api = (p, opt) => fetch(p, {headers: {'Content-Type': 'application/json'}, ...opt})
-  .then(async r => { const b = await r.json().catch(() => ({})); if (!r.ok) throw new Error(b.detail || r.status); return b; });
+  .then(async r => {
+    const b = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      // 入力エラー（422）は detail が配列で来る。そのまま出すと [object Object] になる
+      const d = b.detail;
+      throw new Error(Array.isArray(d) ? d.map(x => x.msg).join(' / ') : (d || `HTTP ${r.status}`));
+    }
+    return b;
+  });
+
+// どのボタンの失敗も黙って消えないようにする。個別に捕まえていない処理の受け皿。
+window.addEventListener('unhandledrejection', e => {
+  alert(`うまくいきませんでした: ${e.reason?.message || e.reason}`);
+});
+
+// 押したことが見えるようにして、待っている間の二度押しを防ぐ。
+// ルーム作成や参加は数秒かかることがあり、反応がないと押し直されて二重に作られる。
+async function busy(btn, label, fn) {
+  if (btn.disabled) return;
+  const text = btn.textContent;
+  btn.disabled = true; btn.textContent = label;
+  try { await fn(); }
+  catch (err) { alert(`うまくいきませんでした: ${err.message}`); }
+  finally { btn.disabled = false; btn.textContent = text; }
+}
 const $ = id => document.getElementById(id);
 const show = (id, on) => { $(id).hidden = !on; };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -320,12 +482,15 @@ const rememberMe = uid => { try { localStorage.setItem(meKey(), uid); } catch {}
 const recallMe = () => { try { return localStorage.getItem(meKey()); } catch { return null; } };
 
 // ---------------------------------------------------------------- 画面の出し分け
+// ダッシュボード内の区画。役割（幹事/参加者）を切り替えたときに前の人の区画が残らないよう、描く前に全部隠す。
+const DASH_SECTIONS = ['sec-created', 'sec-summary', 'sec-fit', 'sec-preview', 'sec-all-warn', 'sec-mine', 'sec-my-warn',
+  'sec-my-notif', 'sec-my-arrange', 'sec-roster', 'sec-arrange', 'sec-danger'];
+
 function setView(mode) {
-  const all = ['view-create','view-enter','sec-preview','sec-mine','sec-my-warn','sec-my-notif',
-    'sec-my-arrange','sec-roster','sec-all-warn','sec-finish','sec-arrange','sec-danger'];
-  all.forEach(id => show(id, false));
-  if (mode === 'create') show('view-create', true);
-  if (mode === 'enter') show('view-enter', true);
+  show('view-create', mode === 'create');
+  show('view-enter', mode === 'enter');
+  show('dash', mode === 'dash');
+  DASH_SECTIONS.forEach(id => show(id, false));
 }
 
 // ---------------------------------------------------------------- 起動
@@ -343,9 +508,14 @@ function setView(mode) {
 })();
 
 // ---------------------------------------------------------------- 入室画面
+function eventLine() {
+  return `${esc(room.title)}<small>${esc(room.event_date)}</small>`;
+}
+
 function renderEnter() {
   setView('enter');
-  $('event-line').textContent = `${room.title}（${room.event_date}）`;
+  $('event-line').innerHTML = eventLine();
+  show('who-name', false); show('btn-switch', false);
   $('people').innerHTML = room.members.map(m => `
     <button class="person" data-pick="${m.uid}">
       <span>${esc(m.display_name)}${m.is_organizer ? ' <small>幹事</small>' : ''}</span>
@@ -358,10 +528,13 @@ document.addEventListener('click', async e => {
   if (pick) { me = pick.dataset.pick; rememberMe(me); await refresh(); }
 });
 
-$('btn-join').onclick = async () => {
-  const name = $('new-member').value.trim(); if (!name) return;
-  const res = await api(`/api/rooms/${roomId}/members`, {method:'POST', body: JSON.stringify({display_name: name})});
-  me = res.uid; rememberMe(me); await refresh();
+$('btn-join').onclick = () => {
+  const name = $('new-member').value.trim();
+  if (!name) { alert('お名前を入れてください。'); return; }
+  return busy($('btn-join'), '参加しています…', async () => {
+    const res = await api(`/api/rooms/${roomId}/members`, {method:'POST', body: JSON.stringify({display_name: name})});
+    me = res.uid; rememberMe(me); await refresh();
+  });
 };
 
 $('btn-switch').onclick = () => { try { localStorage.removeItem(meKey()); } catch {} ; me = null; renderEnter(); };
@@ -369,16 +542,29 @@ $('btn-switch').onclick = () => { try { localStorage.removeItem(meKey()); } catc
 // ---------------------------------------------------------------- ルーム作成
 $('date').value = (() => { const d = new Date(); d.setMonth(d.getMonth() + 2); return d.toISOString().slice(0,10); })();
 
-$('btn-create').onclick = async () => {
+$('btn-create').onclick = () => {
   const name = $('organizer').value.trim();
   if (!name) { alert('お名前を入れてください。'); return; }
-  room = await api('/api/rooms', {method:'POST', body: JSON.stringify({
-    title: $('title').value, scene: 'wedding', event_date: $('date').value,
-    dress_code: $('dresscode').value, organizer_name: name, lighting: $('lighting-new').value,
-  })});
-  roomId = room.room_id; me = room.members[0].uid; rememberMe(me);
-  history.replaceState(null, '', `/app?room=${roomId}`);
-  await render();
+  if (!$('date').value) { alert('開催日を入れてください。'); return; }
+  return busy($('btn-create'), '作成しています…', async () => {
+    room = await api('/api/rooms', {method:'POST', body: JSON.stringify({
+      title: $('title').value, scene: 'wedding', event_date: $('date').value,
+      dress_code: $('dresscode').value, organizer_name: name,
+    })});
+    roomId = room.room_id; me = room.members[0].uid; rememberMe(me);
+    history.replaceState(null, '', `/app?room=${roomId}`);
+    await render();
+    // 作成フォームで「作成後に招待URLが出ます」と約束しているので、最初に見える場所に出す。
+    // 次に画面を描き直したときには消える（その後は「招待URLをコピー」から取れる）。
+    $('created-url').value = room.invite_url;
+    show('sec-created', true);
+    window.scrollTo(0, 0);
+  });
+};
+
+$('btn-created-copy').onclick = async () => {
+  try { await navigator.clipboard.writeText(room.invite_url); $('btn-created-copy').textContent = 'コピーしました'; }
+  catch { $('created-url').select(); }
 };
 
 $('btn-open').onclick = async () => {
@@ -390,66 +576,133 @@ $('btn-open').onclick = async () => {
 async function refresh() { room = await api(`/api/rooms/${roomId}`); await render(); }
 
 async function render() {
-  const isOrganizer = room.members.find(m => m.uid === me)?.is_organizer;
-  setView(null);
+  const meMember = room.members.find(m => m.uid === me);
+  const isOrganizer = !!meMember?.is_organizer;
+  setView('dash');
   history.replaceState(null, '', `/app?room=${roomId}`);
 
-  const meMember = room.members.find(m => m.uid === me);
-  $('event-line').textContent = `${room.title}（${room.event_date}）`;
+  $('event-line').innerHTML = eventLine();
   $('who-name').textContent = `${meMember.display_name}${isOrganizer ? '（幹事）' : ''}`;
   show('who-name', true); show('btn-switch', true);
+  $('dash').classList.toggle('organizer', isOrganizer);
 
+  renderKpis();
+  renderSummary();
   renderPreview();
   await renderMine(meMember);
-  renderMyWarnings();
+  // 幹事には全体の指摘を出すので、自分に関係する分を別に出すと同じ指摘が2回並ぶ
+  if (!isOrganizer) renderMyWarnings();
   await renderMyNotifs();
   renderMyArrange();
 
   if (isOrganizer) {
     renderRoster();
     renderAllWarnings();
-    renderFinish();
     renderArrange();
     show('sec-danger', true);
   }
 }
 
+// ---------------------------------------------------------------- 数字の帯
+function renderKpis() {
+  const n = room.members.length;
+  const decided = room.members.filter(m => m.selected_garment).length;
+  const consented = room.members.filter(m => m.consent_granted).length;
+  const pct = x => `${n ? Math.round(x / n * 100) : 0}%`;
+
+  $('kpi-decided').innerHTML = `${decided}<small>/ ${n}人</small>`;
+  $('kpi-decided-bar').style.width = pct(decided);
+  $('kpi-consent').innerHTML = `${consented}<small>/ ${n}人</small>`;
+  $('kpi-consent-bar').style.width = pct(consented);
+
+  const warnings = room.harmony.warnings;
+  const blocks = warnings.filter(w => w.severity === 'block').length;
+  $('kpi-warn').innerHTML = warnings.length ? `${warnings.length}<small>件</small>` : 'なし';
+  $('kpi-warn-sub').textContent = blocks ? `うちNG ${blocks}件` : (warnings.length ? '確認しておきましょう' : 'いまの組み合わせで大丈夫です');
+  $('kpi-warn-tile').className = 'kpi ' + (blocks ? 'block' : (warnings.length ? 'alert' : 'clear'));
+
+  // 端末の日付で数える。時差でずれないよう、どちらも日付の0時にそろえる
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const days = Math.round((new Date(`${room.event_date}T00:00:00`) - today) / 86400000);
+  $('kpi-days').innerHTML = days > 0 ? `${days}<small>日</small>` : (days === 0 ? '今日' : '終了');
+  $('kpi-date').textContent = room.event_date.replaceAll('-', '/');
+}
+
+// ---------------------------------------------------------------- 総評と判定の基準
+const ENGINE_LABEL = { gemini: 'Gemini', stub: '自動' };
+
+function renderSummary() {
+  show('sec-summary', true);
+  const h = room.harmony;
+  // 誰が書いた文かを出す。Gemini が落ちて自動の文に替わったときも、そうとわかるように
+  $('summary').textContent = h.explanation || '衣装が決まると、ここにグループ全体の総評が出ます。';
+  $('summary').classList.toggle('pending', !h.explanation);
+  show('summary-by', !!h.explanation_by);
+  $('summary-by').textContent = h.explanation_by === 'gemini' ? 'Gemini による総評' : '自動の要約';
+  $('summary-by').className = 'by' + (h.explanation_by === 'gemini' ? '' : ' stub');
+
+  $('scene-label').textContent = room.scene_label;
+  $('ng-rules').innerHTML = room.ng_rules.length
+    ? room.ng_rules.map(r => `<span class="ng">${esc(r.label)}
+        ${r.by_scene ? '<small>基本</small>' : ''}${r.by_dress_code ? '<small class="spec">指定</small>' : ''}</span>`).join('')
+    : '<span class="muted">なし</span>';
+  $('dress-note').textContent = room.dress_code
+    ? `「${room.dress_code}」を${ENGINE_LABEL[room.dress_rules_by] || "自動"}で読み取った分が「指定」です。基本のNGは外れません。`
+    : `ドレスコードの指定はありません。${room.scene_label}の基本のNGで判定しています。`;
+}
+
+// ---------------------------------------------------------------- 集合プレビュー
 function renderPreview() {
   show('sec-preview', true);
   if (!room.preview_url) return;
   $('preview-img').src = room.preview_url + '&t=' + Date.now();
-  $('preview-rev').textContent = `${room.lighting_label} ／ rev.${room.preview.revision}`;
+  $('preview-rev').textContent = `rev.${room.preview.revision}`;
   const hidden = room.members.filter(m => !m.composed_in_preview).map(m => m.display_name);
   $('consent-note').textContent = hidden.length
     ? `シルエット表示: ${hidden.join('、')}（未同意）`
     : '全員が合成に同意しています';
 }
 
-// ---------------------------------------------------------------- 参加者ビュー
+// ---------------------------------------------------------------- あなたのすること・衣装を選ぶ
 async function renderMine(meMember) {
   show('sec-mine', true);
+  show('sec-fit', true);
   const consented = meMember.consent_granted;
   const decided = !!meMember.selected_garment;
 
+  // 衣装が決まるまでは「衣装を選ぶ」が一番大事なので左上に出す。決まったら集合プレビューと入れ替える
+  $('dash').classList.toggle('fit-first', !decided);
+  $('dash').classList.toggle('mine-done', decided && consented);
+
   $('mine-hint').textContent = decided && consented
-    ? 'あなたの分は完了しています。変更したいときは下から選び直せます。'
+    ? 'あなたの分は完了しています。変更したいときは「衣装を選ぶ」から選び直せます。'
     : 'この2つが終われば、あなたの分は完了です。';
 
-  $('step-consent').className = 'step ' + (consented ? 'done' : 'now');
+  // 1. 衣装を決める → 2. 同意する、の順。強調（塗りのボタン・「いま」の印）は今やるべき1つにだけ付ける。
+  $('step-fit').className = 'step ' + (decided ? 'done' : 'now');
+  $('step-fit-desc').textContent = decided
+    ? `決定: ${meMember.selected_garment.name}`
+    : '「衣装を選ぶ」で候補を試着して、1着に決めます。';
+
+  const consentIsNext = decided && !consented;
+  $('step-consent').className = 'step ' + (consented ? 'done' : (consentIsNext ? 'now' : ''));
   $('consent-desc').textContent = consented
     ? '同意ずみです。撤回すると、過去の合成からもすぐに消え、試着画像も削除されます。'
     : 'まだ同意していないため、プレビューではシルエットで表示されています。';
   $('btn-consent').textContent = consented ? '同意を撤回する' : '同意する';
-  $('btn-consent').className = consented ? 'ghost' : '';
-
-  $('step-fit').className = 'step ' + (decided ? 'done' : (consented ? 'now' : ''));
-  $('fit-desc').textContent = decided
-    ? `いまの選択: ${meMember.selected_garment.name}`
-    : '候補を出して、着るものを選びます。';
+  $('btn-consent').className = consentIsNext ? '' : 'ghost';
 
   const fitting = await api(`/api/rooms/${roomId}/members/${me}/fitting`);
-  $('btn-tryon').textContent = fitting.candidates.length ? '別の候補を出す' : '試着する';
+  const hasCandidates = fitting.candidates.length > 0;
+  $('fit-desc').textContent = decided
+    ? `いまの選択: ${meMember.selected_garment.name}。ほかのカードを押すと選び直せます。`
+    : (hasCandidates ? 'カードを押すと、その衣装に決まります。似合い度は並び順の目安です。' : '');
+  show('fit-desc', !!$('fit-desc').textContent);
+  $('btn-tryon').textContent = hasCandidates ? '別の候補を出す' : '試着する';
+  // 候補が出たあとは「カードから選ぶ」が本題なので、候補を出し直すボタンは控えめにする
+  $('btn-tryon').className = hasCandidates || decided ? 'ghost' : '';
   show('btn-alt', room.harmony.warnings.some(w => w.member_uids.includes(me)));
+  show('fits-empty', !hasCandidates);
   $('fits').innerHTML = fitting.candidates.map(c => `
     <button class="fit ${c.selected ? 'on' : ''}" data-fit="${c.garment.garment_id}">
       <img src="${c.image_url}" alt="${esc(c.garment.name)}" loading="lazy" />
@@ -467,19 +720,18 @@ $('btn-consent').onclick = async () => {
   await refresh();
 };
 
-$('btn-tryon').onclick = async () => {
-  const b = $('btn-tryon'); b.disabled = true; b.textContent = '試着中…';
-  try { await api(`/api/rooms/${roomId}/members/${me}/tryon`, {method:'POST', body: JSON.stringify({})}); await refresh(); }
-  finally { b.disabled = false; }
-};
+$('btn-tryon').onclick = () => busy($('btn-tryon'), '試着中…', async () => {
+  await api(`/api/rooms/${roomId}/members/${me}/tryon`, {method:'POST', body: JSON.stringify({})});
+  await refresh();
+});
 
-$('btn-alt').onclick = async () => {
+$('btn-alt').onclick = () => busy($('btn-alt'), '探しています…', async () => {
   const alts = await api(`/api/rooms/${roomId}/members/${me}/alternatives`);
   if (!alts.length) { alert('いまの条件に合う代替案が見つかりませんでした。'); return; }
   await api(`/api/rooms/${roomId}/members/${me}/tryon`,
     {method:'POST', body: JSON.stringify({garment_ids: alts.map(g => g.garment_id)})});
   await refresh();
-};
+});
 
 document.addEventListener('click', async e => {
   const fit = e.target.closest('[data-fit]');
@@ -489,12 +741,55 @@ document.addEventListener('click', async e => {
   await refresh();
 });
 
-function warnHtml(w) {
+// ---------------------------------------------------------------- 指摘・お知らせ・手配
+function warnHtml(w, { markMine = false } = {}) {
+  const mine = markMine && w.member_uids.includes(me);
   return `<div class="warn ${w.severity === 'block' ? 'block' : ''}">
-    <p>${esc(w.message)}</p>
+    <p>${esc(w.message)}${mine ? '<span class="you">あなたも該当</span>' : ''}</p>
     ${w.suggestions?.length ? `<p class="muted" style="font-size:12px">対応案: ${w.suggestions.map(esc).join(' ／ ')}</p>` : ''}
-    <div class="evidence">${esc(JSON.stringify(w.evidence))}</div>
+    <div class="evidence">${evidenceHtml(w.evidence || {})}</div>
   </div>`;
+}
+
+// ---------------------------------------------------------------- 判定の根拠
+// 数値は必ず出す（根拠のない警告は作らない約束）。ただし JSON のままでは読めないので、
+// 知っている項目は日本語の札にし、知らない項目も key: value で落とさず出す。
+const RULE_LABEL = { white: '白NG', all_black: '全身黒', fur: 'ファーNG', too_casual: 'カジュアルすぎ' };
+const PATTERN_LABEL = { solid: '無地', floral: '花柄', geometric: '幾何・ストライプ', lace: 'レース', animal: 'アニマル' };
+const nameOf = uid => room.members.find(m => m.uid === uid)?.display_name || uid;
+const ev = (label, value) => `<span class="ev"><span class="l">${esc(label)}</span><b>${value}</b></span>`;
+const chip = hex => `<span class="chip" style="background:${esc(hex)}"></span>`;
+
+function evidenceHtml(e) {
+  const out = [];
+  const done = new Set();
+  // 実際に表示したキーだけを「済み」にする。表示しなかったキーは最後に key: value で必ず出る
+  const has = k => k in e && e[k] !== null && e[k] !== undefined;
+  const use = (...keys) => keys.forEach(k => done.add(k));
+  const limit = (text) => has('threshold') ? (use('threshold'), `<span class="l">（${esc(e.threshold)} ${text}）</span>`) : '';
+
+  if (has('delta_e_2000')) { use('delta_e_2000'); out.push(ev('色差 ΔE', `${esc(e.delta_e_2000)}${limit('未満でかぶり')}`)); }
+  if (Array.isArray(e.colors)) { use('colors'); out.push(ev('色', e.colors.map(c => `${chip(c)} ${esc(c)}`).join(' '))); }
+  if (Array.isArray(e.hue_degrees)) { use('hue_degrees'); out.push(ev('色相', e.hue_degrees.map(h => `${Math.round(h)}°`).join(' / '))); }
+  if (has('formality')) { use('formality'); out.push(ev('フォーマル度', esc(e.formality))); }
+  if (has('group_median')) { use('group_median'); out.push(ev('グループの中央値', esc(e.group_median))); }
+  if (has('gap')) { use('gap'); out.push(ev('差', `${esc(e.gap)}${limit('以上で浮き')}`)); }
+  if (e.all_scores && typeof e.all_scores === 'object') {
+    use('all_scores');
+    out.push(ev('全員', Object.entries(e.all_scores).map(([u, s]) => `${esc(nameOf(u))} ${esc(s)}`).join('・')));
+  }
+  if (has('required_min')) { use('required_min'); out.push(ev('必要なフォーマル度', `${esc(e.required_min)} 以上`)); }
+  if (has('pattern')) { use('pattern'); out.push(ev('柄', esc(PATTERN_LABEL[e.pattern] || e.pattern))); }
+  if (has('primary_color')) { use('primary_color'); out.push(ev('色', `${chip(e.primary_color)} ${esc(e.primary_color)}`)); }
+  if (has('material')) { use('material'); out.push(ev('素材', e.material === 'fur' ? 'ファー' : esc(e.material))); }
+  if (has('rule')) { use('rule'); out.push(ev('基準', esc(RULE_LABEL[e.rule] || e.rule))); }
+  if (has('source')) { use('source'); out.push(ev('指定元', esc(e.source))); }
+  if (has('scene')) { use('scene'); out.push(ev('シーン', esc(e.scene))); }
+
+  for (const [k, v] of Object.entries(e)) {
+    if (!done.has(k)) out.push(ev(k, esc(typeof v === 'object' ? JSON.stringify(v) : v)));
+  }
+  return out.join('');
 }
 
 function renderMyWarnings() {
@@ -506,6 +801,7 @@ function renderMyWarnings() {
 async function renderMyNotifs() {
   const list = await api(`/api/rooms/${roomId}/members/${me}/notifications`);
   show('sec-my-notif', list.length > 0);
+  show('btn-read', list.some(n => !n.read_at));
   $('my-notifs').innerHTML = list.slice().reverse().map(n => `
     <div class="notif ${n.read_at ? 'read' : ''}">
       <p>${esc(n.text)}</p>
@@ -522,36 +818,30 @@ function renderMyArrange() {
   const item = room.arrange?.items.find(i => i.member_uid === me);
   show('sec-my-arrange', !!item);
   if (!item) return;
-  $('my-arrange').innerHTML = `<p>${esc(item.garment_name)} — ¥${item.price_yen.toLocaleString()}
-    ${item.rental_url ? `<a href="${item.rental_url}" target="_blank" rel="noopener">レンタルする</a>` : ''}</p>
-    ${room.arrange.reminders.map(r => `<p class="muted">${esc(r)}</p>`).join('')}`;
+  $('my-arrange').innerHTML = `<p style="margin:0 0 4px">${esc(item.garment_name)} — ¥${item.price_yen.toLocaleString()}</p>
+    ${room.arrange.reminders.map(r => `<p class="muted" style="margin:0">${esc(r)}</p>`).join('')}`;
 }
 
-// ---------------------------------------------------------------- 幹事ビュー
+// ---------------------------------------------------------------- 幹事の道具
 function renderRoster() {
   show('sec-roster', true);
-  const done = room.members.filter(m => m.selected_garment).length;
-  $('roster-hint').innerHTML = room.all_confirmed
-    ? '<span class="banner ok">全員の衣装が決まりました</span>'
-    : `<span class="banner wait">${done} / ${room.members.length} 人が確定ずみ</span>`;
-
   $('roster').innerHTML = room.members.map(m => `
     <div class="mate">
-      ${m.selected_garment
-        ? `<span class="swatch" style="background:${m.selected_garment.primary_color_hex}"></span>`
-        : '<span class="swatch" style="background:#eee"></span>'}
+      <span class="swatch" style="background:${m.selected_garment ? m.selected_garment.primary_color_hex : '#eee'}"></span>
       <span class="nm">${esc(m.display_name)}${m.is_organizer ? '（幹事）' : ''}
-        <span class="muted">${m.selected_garment ? esc(m.selected_garment.name) : '衣装まだ'}</span></span>
-      ${m.consent_granted ? '<span class="tag ok">合成OK</span>' : '<span class="tag no">未同意</span>'}
-      ${m.selected_garment ? '<span class="tag ok">確定</span>' : '<span class="tag wait">未確定</span>'}
+        <small>${m.selected_garment ? esc(m.selected_garment.name) : '衣装まだ'}</small></span>
+      <span class="tags">
+        ${m.selected_garment ? '<span class="tag ok">確定</span>' : '<span class="tag wait">未確定</span>'}
+        ${m.consent_granted ? '<span class="tag ok">合成OK</span>' : '<span class="tag no">未同意</span>'}
+      </span>
     </div>`).join('');
 }
 
-$('btn-remind').onclick = async () => {
+$('btn-remind').onclick = () => busy($('btn-remind'), '送っています…', async () => {
   const res = await api(`/api/rooms/${roomId}/remind`, {method:'POST'});
   alert(res.reminded.length ? `${res.reminded.length}人にお知らせを送りました。` : '未確定の人はいません。');
   await refresh();
-};
+});
 
 $('btn-copy').onclick = async () => {
   try { await navigator.clipboard.writeText(room.invite_url); alert('招待URLをコピーしました。'); }
@@ -560,45 +850,15 @@ $('btn-copy').onclick = async () => {
 
 function renderAllWarnings() {
   show('sec-all-warn', room.harmony.warnings.length > 0);
-  $('all-warnings').innerHTML = room.harmony.warnings.map(warnHtml).join('');
-  $('summary').textContent = room.harmony.explanation || '';
+  $('all-warnings').innerHTML = room.harmony.warnings.map(w => warnHtml(w, { markMine: true })).join('');
 }
-
-function renderFinish() {
-  show('sec-finish', true);
-  $('lighting').value = room.lighting;
-  $('btn-movie').disabled = !room.movie_available;
-  $('movie-note').textContent = room.movie
-    ? `${room.movie.seconds}秒`
-    : (room.movie_blocked_reason || '');
-  show('movie-box', !!room.movie_url);
-  if (room.movie_url) {
-    const isVideo = room.movie.content_type.startsWith('video/');
-    $('movie-img').hidden = isVideo; $('movie-video').hidden = !isVideo;
-    const src = room.movie_url + '?t=' + Date.now();
-    if (isVideo) $('movie-video').src = src; else $('movie-img').src = src;
-  }
-}
-
-$('lighting').onchange = async () => {
-  await api(`/api/rooms/${roomId}/lighting`, {method:'POST', body: JSON.stringify({lighting: $('lighting').value})});
-  await refresh();
-};
-
-$('btn-movie').onclick = async () => {
-  const b = $('btn-movie'); b.disabled = true; b.textContent = '生成中…';
-  try { await api(`/api/rooms/${roomId}/movie`, {method:'POST'}); await refresh(); }
-  catch (err) { alert(err.message); }
-  finally { b.textContent = '記念ムービーを作る'; }
-};
 
 function renderArrange() {
   show('sec-arrange', !!room.arrange);
   if (!room.arrange) return;
   $('arrange').innerHTML = room.arrange.items.map(i => {
     const m = room.members.find(x => x.uid === i.member_uid);
-    return `<p>${esc(m ? m.display_name : i.member_uid)}: ${esc(i.garment_name)} — ¥${i.price_yen.toLocaleString()}
-      ${i.rental_url ? `<a href="${i.rental_url}" target="_blank" rel="noopener">リンク</a>` : ''}</p>`;
+    return `<p>${esc(m ? m.display_name : i.member_uid)}: ${esc(i.garment_name)} — ¥${i.price_yen.toLocaleString()}</p>`;
   }).join('') + room.arrange.reminders.map(r => `<p class="muted">${esc(r)}</p>`).join('');
 }
 

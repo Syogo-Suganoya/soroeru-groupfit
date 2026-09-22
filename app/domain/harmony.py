@@ -3,10 +3,11 @@
 - 色かぶり: 主要色の CIEDE2000 色差がしきい値未満のペアを警告
 - 柄かぶり: 同一柄ファミリで無地以外のペアを警告
 - 浮き: フォーマル度のグループ中央値から threshold 以上乖離
-- ドレスコード: シーン別プリセットで検証
+- ドレスコード: シーン別プリセット＋自由記述の読み取り結果（EventInfo.dress_rules）で検証
 
 いずれも evidence に数値を必ず入れる（提案の透明性のため）。純関数として書き、
-LLM を通さずに再現可能にしてある。Gemini は総評の言語化のみを担当する。
+LLM を通さずに再現可能にしてある。Gemini が関わるのは、判定の入力になる
+ドレスコードの読み取り（ルーム作成時に1回・結果は保存）と、判定後の総評の言語化だけ。
 """
 
 from __future__ import annotations
@@ -14,7 +15,7 @@ from __future__ import annotations
 from statistics import median
 
 from app.domain.color import delta_e_hex, hue_degrees
-from app.domain.dresscode import preset_for
+from app.domain.dresscode import effective_preset
 from app.domain.models import (
     Fitting,
     HarmonyReport,
@@ -46,7 +47,7 @@ def evaluate(
         return HarmonyReport(warnings=[], formality_median=None)
 
     # ---------------------------------------------------------- ドレスコード
-    preset = preset_for(room.event.scene)
+    preset = effective_preset(room.event)
     for uid, fitting in fittings.items():
         garment = fitting.selected.garment  # type: ignore[union-attr]
         for hit in preset.check(garment):

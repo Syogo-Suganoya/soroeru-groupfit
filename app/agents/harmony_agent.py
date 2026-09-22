@@ -1,16 +1,19 @@
 """調和エージェント。
 
 かぶり・浮きの検知と代替案提示。検知・提案は自律で行うが、衣装の変更は行わない。
-数値判定はドメインの純関数、言語化のみ Gemini という分担にしている。
+数値判定はドメインの純関数、ドレスコードの読み取りと総評の言語化は Gemini という分担にしている。
 """
 
 from __future__ import annotations
 
+import hashlib
+import json
+
 from app.domain import catalog, harmony as rules
 from app.domain.color import delta_e_hex
-from app.domain.dresscode import preset_for
-from app.domain.models import Garment, HarmonyReport, Room, Severity, WarningKind
-from app.ports.llm import LlmPort
+from app.domain.dresscode import effective_preset
+from app.domain.models import DressRules, Garment, HarmonyReport, Room, Severity, WarningKind
+from app.ports.llm import LlmPort, Summary
 
 
 class HarmonyAgent:
@@ -23,14 +26,59 @@ class HarmonyAgent:
         self.color_clash_delta_e = color_clash_delta_e
         self.formality_gap_threshold = formality_gap_threshold
 
+    async def interpret_dress_code(self, text: str | None) -> DressRules | None:
+        """ルーム作成時に1回だけ呼ぶ。結果を保存し、以後の判定はその保存値で行う。"""
+        if not text or not text.strip():
+            return None
+        return await self.llm.interpret_dress_code(text=text.strip())
+
     async def evaluate(self, room: Room) -> HarmonyReport:
         report = rules.evaluate(
             room,
             color_clash_delta_e=self.color_clash_delta_e,
             formality_gap_threshold=self.formality_gap_threshold,
         )
-        report.explanation = await self.llm.summarize_harmony(room=room, report=report)
+        confirmed = room.confirmed_fittings()
+        if not confirmed:
+            return report  # 誰も決めていない段階で「揃っています」とは言えない
+
+        # advance() は同意・参加・試着でも走る。総評の入力（確定衣装と指摘）が
+        # 変わっていなければ前回の文を使い回し、Gemini を呼ばない。
+        # ただし前回が Gemini 障害時の代替文だった場合は、次の機会に作り直す。
+        key = self._summary_key(room, report)
+        previous = room.harmony
+        if (
+            previous.explanation
+            and previous.explanation_key == key
+            and previous.explanation_by == self.llm.engine
+        ):
+            summary = Summary(text=previous.explanation, by=previous.explanation_by)
+        else:
+            summary = await self.llm.summarize_harmony(room=room, report=report)
+        report.explanation = summary.text
+        report.explanation_by = summary.by
+        report.explanation_key = key
         return report
+
+    @staticmethod
+    def _summary_key(room: Room, report: HarmonyReport) -> str:
+        confirmed = room.confirmed_fittings()
+        basis = {
+            "scene": room.event.scene.value,
+            "dress_code": room.event.dress_code,
+            # 表示名は総評の文中に出るので、変われば作り直す
+            "members": sorted(
+                (
+                    (room.member(uid).display_name if room.member(uid) else uid),
+                    f.selected_garment_id,
+                )
+                for uid, f in confirmed.items()
+            ),
+            "undecided": len(room.active_members) - len(confirmed),
+            "warnings": [(w.kind.value, w.severity.value, w.message) for w in report.warnings],
+        }
+        raw = json.dumps(basis, ensure_ascii=False, sort_keys=True, default=str)
+        return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
     def alternatives(self, room: Room, *, uid: str, limit: int = 3) -> list[Garment]:
         """警告の当事者に出す代替衣装。
@@ -45,7 +93,7 @@ class HarmonyAgent:
             for other_uid, f in confirmed.items()
             if other_uid != uid
         ]
-        preset = preset_for(room.event.scene)
+        preset = effective_preset(room.event)
         median_formality = room.harmony.formality_median or 4.0
 
         scored: list[tuple[float, Garment]] = []

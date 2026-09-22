@@ -15,12 +15,14 @@ const puppeteer = require("puppeteer");
 
 const BASE = process.env.BASE_URL || "http://api:8080";
 const OUT = process.env.OUT_DIR || "/work/web/shots";
-const WIDTH = 960;
+// ダッシュボードが2列になる幅（900px 超）で撮る。狭いと1列に畳まれて配置が伝わらない
+const WIDTH = 1240;
 const PAD = 16;
 
 // api は画像のURLを PUBLIC_BASE_URL（既定 localhost:8080）で返す。撮影用のブラウザからは
 // そのホストに届かないので、読み込みだけ差し替える。画面に出る文字は触らない。
-const PUBLIC = "http://localhost:8080";
+// ポートを変えて起動していることもあるので、localhost ならポートを問わず差し替える。
+const PUBLIC = /^http:\/\/localhost(:\d+)?/;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -48,7 +50,7 @@ async function main() {
   await page.setRequestInterception(true);
   page.on("request", (req) => {
     const url = req.url();
-    if (url.startsWith(PUBLIC)) req.continue({ url: BASE + url.slice(PUBLIC.length) });
+    if (PUBLIC.test(url)) req.continue({ url: url.replace(PUBLIC, BASE) });
     else req.continue();
   });
 
@@ -161,7 +163,6 @@ async function main() {
   await page.evaluate((date) => {
     document.getElementById("date").value = date;
     document.getElementById("organizer").value = "さおり";
-    document.getElementById("lighting-new").value = "hall_evening";
   }, inDays(30));
   await shot("01-create", ["#view-create"]);
 
@@ -193,43 +194,36 @@ async function main() {
   await fit(akane, ["g_sage", "g_terracotta", "g_dusty_blue"], "g_sage");
   // みずきはさおりとほぼ同じネイビーを選ぶ → 色かぶりの指摘が出る
   await fit(mizuki, ["g_navy_lace", "g_dusty_blue", "g_floral_pink"], "g_navy_lace");
+  // ゆいは試着だけして、まだ決めていない（同意もまだ）
+  await fit(yui, ["g_bordeaux", "g_terracotta", "g_floral_green"], null);
 
   // ------------------------------------------------------------ 2. 招待URLを開く
   await openAs(R, null);
   await waitShown("view-enter");
   await shot("02-enter", ["#view-enter"]);
 
-  // ------------------------------------------------------------ 3. 参加者: 試着して決める
+  // 3〜5 はダッシュボードをまるごと撮る。見せたいのは区画の中身より、何がどこに大きく置かれるか。
+  const dashboard = ["header", "#dash"];
+  const candidatesDrawn = () =>
+    page.waitForFunction(() => document.querySelectorAll("#fits .fit img").length > 0, { timeout: 20000 });
+
+  // ------------------------------------------------------------ 3. 参加者（未決定）: 衣装を選ぶが左上
+  await openAs(R, yui);
+  await waitShown("sec-fit");
+  await candidatesDrawn();
+  await shot("03-fitting", dashboard);
+
+  // ------------------------------------------------------------ 4. 参加者（決定ずみ）: プレビューが左上、指摘が右
   await openAs(R, mizuki);
-  await waitShown("sec-mine");
-  await page.waitForFunction(() => document.querySelectorAll("#fits .fit img").length > 0, { timeout: 20000 });
-  await shot("03-fitting", [".head-row", "#sec-mine"]);
-
-  // ------------------------------------------------------------ 4. 参加者: かぶりの指摘
   await waitShown("sec-my-warn");
-  await shot("04-harmony", ["#sec-preview", "#sec-my-warn", "#sec-my-notif"]);
+  await candidatesDrawn();
+  await shot("04-harmony", dashboard);
 
-  // ------------------------------------------------------------ 5. 幹事: 全体を見る
+  // ------------------------------------------------------------ 5. 幹事: 進み具合と全体の指摘
   await openAs(R, saori);
   await waitShown("sec-roster");
-  await shot("05-organizer", [".head-row", "#sec-roster", "#sec-all-warn"]);
-
-  // ------------------------------------------------------------ 6. 全員そろって仕上げ
-  // みずきは代替案のくすみブルーに替え、ゆいも決める → 全員確定
-  await call("POST", `/api/rooms/${R}/members/${mizuki}/select`, { garment_id: "g_dusty_blue" });
-  await fit(yui, ["g_bordeaux", "g_terracotta", "g_floral_green"], "g_bordeaux");
-  await call("POST", `/api/rooms/${R}/lighting`, { lighting: "hall_evening" });
-  await call("POST", `/api/rooms/${R}/movie`);
-
-  await openAs(R, saori);
-  await waitShown("sec-finish");
-  // ムービーはあとから読み込まれる。測った後に伸びると下が切れるので、描けるまで待つ
-  await page.waitForFunction(() => {
-    const img = document.getElementById("movie-img");
-    return img && !img.hidden && img.complete && img.naturalWidth > 0;
-  }, { timeout: 20000 });
-  // 記念ムービーは集合プレビューと同じ構図なので、仕上げの区画だけを写す（並べると同じ絵が2枚になる）
-  await shot("06-finish", ["#sec-finish"]);
+  await candidatesDrawn();
+  await shot("05-organizer", dashboard);
 
   await browser.close();
 }

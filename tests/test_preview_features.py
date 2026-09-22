@@ -1,4 +1,4 @@
-"""会場ライティング再現・記念ムービーのテスト。
+"""集合プレビューのローカル合成のテスト。
 
 ローカル実装だけで体験が成立し、同意の約束（未同意はシルエット）が
 崩れないことを確かめる。
@@ -10,63 +10,33 @@ import io
 
 from PIL import Image
 
-from app.domain.models import LightingPreset
 from app.ports.compositor import LocalCompositor
-from app.ports.video import LocalVideoPort
-from app.rendering import figure
 
-FIGURES = [
-    {"name": "A", "color_hex": "#1F2A5A", "pattern": "solid", "silhouette": False},
-    {"name": "B", "color_hex": "#6E1E33", "pattern": "solid", "silhouette": True},
-]
+NAVY = (0x1F, 0x2A, 0x5A)
 
 
-def average_rgb(png: bytes) -> tuple[float, float, float]:
+def figures(*, silhouette: bool) -> list[dict]:
+    return [{"name": "A", "color_hex": "#1F2A5A", "pattern": "solid", "silhouette": silhouette}]
+
+
+def has_color(png: bytes, rgb: tuple[int, int, int]) -> bool:
     img = Image.open(io.BytesIO(png)).convert("RGB")
-    pixels = list(img.getdata())
-    n = len(pixels)
-    return tuple(sum(c[i] for c in pixels) / n for i in range(3))  # type: ignore[return-value]
+    return rgb in {c for _, c in img.getcolors(maxcolors=1 << 24)}
 
 
-# ---------------------------------------------------------------- ライティング
+async def test_consented_member_is_drawn_in_their_garment_color():
+    png = await LocalCompositor().compose_group(figures=figures(silhouette=False))
+    assert has_color(png, NAVY)
 
 
-def test_lighting_none_leaves_the_image_untouched():
-    png = figure.render_group_preview(FIGURES)
-    assert figure.apply_lighting(png, LightingPreset.none) == png
+async def test_silhouette_hides_the_garment_color():
+    # 未同意の人は、衣装が決まっていてもその色で描かない（誰が何を着るかも出さない）
+    png = await LocalCompositor().compose_group(figures=figures(silhouette=True))
+    assert not has_color(png, NAVY)
 
 
-def test_evening_lighting_is_warmer_and_darker_than_daylight():
-    png = figure.render_group_preview(FIGURES)
-    day = average_rgb(figure.apply_lighting(png, LightingPreset.garden_day))
-    evening = average_rgb(figure.apply_lighting(png, LightingPreset.hall_evening))
-
-    assert evening[0] - evening[2] > day[0] - day[2]  # 赤寄り（暖色）
-    assert sum(evening) < sum(day)  # 全体に暗い
-
-
-async def test_local_compositor_applies_lighting():
-    compositor = LocalCompositor()
-    plain = await compositor.compose_group(figures=FIGURES, lighting=LightingPreset.none)
-    lit = await compositor.compose_group(
-        figures=FIGURES, lighting=LightingPreset.chapel
-    )
-    assert plain != lit
-
-
-# ---------------------------------------------------------------- 記念ムービー
-
-
-async def test_local_video_makes_an_animated_gif():
-    png = figure.render_group_preview(FIGURES)
-    result = await LocalVideoPort().from_image(image=png, prompt="test")
-
-    assert result.content_type == "image/gif"
-    assert result.engine == "local"
-    assert result.has_audio is False  # ローカルでは音楽を付けない
-
-    gif = Image.open(io.BytesIO(result.data))
-    assert gif.format == "GIF"
-    assert getattr(gif, "n_frames", 1) > 1
-    # 元のプレビューと同じ画面サイズを保つ
-    assert gif.size == Image.open(io.BytesIO(png)).size
+async def test_composition_is_deterministic():
+    # 同じ入力なら同じ絵になる。advance() のたびに作り直しても見た目が揺れない
+    a = await LocalCompositor().compose_group(figures=figures(silhouette=False))
+    b = await LocalCompositor().compose_group(figures=figures(silhouette=False))
+    assert a == b

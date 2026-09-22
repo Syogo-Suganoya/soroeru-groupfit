@@ -9,12 +9,11 @@ from datetime import date
 
 from pydantic import BaseModel, Field
 
+from app.domain.dresscode import NG_LABELS, NG_RULES, preset_for
 from app.domain.models import (
     ArrangePlan,
     Garment,
     HarmonyReport,
-    LightingPreset,
-    Movie,
     PreviewRevision,
     Room,
     SceneType,
@@ -27,7 +26,6 @@ class CreateRoomRequest(BaseModel):
     event_date: date
     dress_code: str | None = None
     organizer_name: str
-    lighting: LightingPreset = LightingPreset.none
 
 
 class JoinRequest(BaseModel):
@@ -44,10 +42,6 @@ class TryOnRequest(BaseModel):
 
 class SelectRequest(BaseModel):
     garment_id: str
-
-
-class LightingRequest(BaseModel):
-    lighting: LightingPreset
 
 
 class ReadNotificationsRequest(BaseModel):
@@ -105,6 +99,15 @@ class MemberView(BaseModel):
     selected_garment: Garment | None = None
 
 
+class NgRuleView(BaseModel):
+    """判定に使っている NG。どこから来たか（シーンの基本 / ドレスコードの指定）を添える。"""
+
+    rule: str
+    label: str
+    by_scene: bool
+    by_dress_code: bool
+
+
 class RoomView(BaseModel):
     room_id: str
     status: str
@@ -112,6 +115,9 @@ class RoomView(BaseModel):
     scene: str
     event_date: date
     dress_code: str | None
+    scene_label: str
+    ng_rules: list[NgRuleView]
+    dress_rules_by: str | None  # ドレスコードを読んだエンジン（gemini | stub）。記述なしなら None
     invite_url: str
     ttl_at: str
     members: list[MemberView]
@@ -120,22 +126,9 @@ class RoomView(BaseModel):
     preview_url: str | None
     arrange: ArrangePlan | None
     all_confirmed: bool
-    lighting: LightingPreset
-    lighting_label: str
-    movie: Movie | None = None
-    movie_url: str | None = None
-    movie_available: bool = False  # 記念ムービーを作れる状態か
-    movie_blocked_reason: str = ""
 
     @classmethod
-    def of(
-        cls,
-        room: Room,
-        *,
-        base_url: str,
-        ttl_days: int,
-        movie_availability: tuple[bool, str] = (False, ""),
-    ) -> "RoomView":
+    def of(cls, room: Room, *, base_url: str, ttl_days: int) -> "RoomView":
         composed = set(room.preview.current.composed_uids) if room.preview.current else set()
         unread = room.unread_counts()
         members: list[MemberView] = []
@@ -160,6 +153,9 @@ class RoomView(BaseModel):
             scene=room.event.scene.value,
             event_date=room.event.event_date,
             dress_code=room.event.dress_code,
+            scene_label=preset_for(room.event.scene).label,
+            ng_rules=_ng_rules(room),
+            dress_rules_by=room.event.dress_rules.interpreted_by if room.event.dress_rules else None,
             invite_url=f"{base_url}/app?room={room.room_id}",
             ttl_at=room.ttl_at(ttl_days).isoformat(),
             members=members,
@@ -172,12 +168,20 @@ class RoomView(BaseModel):
             ),
             arrange=room.arrange,
             all_confirmed=room.all_confirmed,
-            lighting=room.event.lighting,
-            lighting_label=room.event.lighting.label,
-            movie=room.movie,
-            movie_url=(
-                f"{base_url}/api/rooms/{room.room_id}/movie" if room.movie else None
-            ),
-            movie_available=movie_availability[0],
-            movie_blocked_reason=movie_availability[1],
         )
+
+
+def _ng_rules(room: Room) -> list[NgRuleView]:
+    base = preset_for(room.event.scene)
+    read = room.event.dress_rules
+    out: list[NgRuleView] = []
+    for rule in NG_RULES:
+        by_scene = bool(getattr(base, f"ng_{rule}"))
+        by_dress_code = bool(read and getattr(read, f"ng_{rule}"))
+        if by_scene or by_dress_code:
+            out.append(
+                NgRuleView(
+                    rule=rule, label=NG_LABELS[rule], by_scene=by_scene, by_dress_code=by_dress_code
+                )
+            )
+    return out

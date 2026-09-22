@@ -43,36 +43,17 @@ class SceneType(str, Enum):
         }[self]
 
 
-class LightingPreset(str, Enum):
-    """会場のライト環境。
+class DressRules(BaseModel):
+    """自由記述ドレスコードの読み取り結果。
 
-    集合プレビューを式場の光に寄せて、当日の見え方に近づけるための指定。
-    ローカル合成では色調の調整で近似する。
+    シーンのプリセットに NG を「足す」ためだけに使い、プリセットを緩めることはしない。
+    LLM の読み違いで結婚式の白NGが外れる、といった事故を構造的に起こさないため。
     """
 
-    none = "none"
-    garden_day = "garden_day"
-    hall_evening = "hall_evening"
-    chapel = "chapel"
-
-    @property
-    def label(self) -> str:
-        return {
-            LightingPreset.none: "指定なし",
-            LightingPreset.garden_day: "昼のガーデン",
-            LightingPreset.hall_evening: "ホテル宴会場（夜）",
-            LightingPreset.chapel: "チャペル",
-        }[self]
-
-    @property
-    def prompt(self) -> str:
-        """relight モデルに渡す光環境の説明。"""
-        return {
-            LightingPreset.none: "",
-            LightingPreset.garden_day: "bright outdoor daylight, soft sunlight, garden venue",
-            LightingPreset.hall_evening: "warm indoor chandelier light, evening banquet hall",
-            LightingPreset.chapel: "soft diffused window light, bright chapel interior",
-        }[self]
+    ng_white: bool = False
+    ng_all_black: bool = False
+    ng_fur: bool = False
+    interpreted_by: str = "stub"  # stub | gemini（どちらが読んだかを残す）
 
 
 class EventInfo(BaseModel):
@@ -81,8 +62,8 @@ class EventInfo(BaseModel):
     scene: SceneType = SceneType.wedding
     title: str = "お呼ばれ"
     event_date: date
-    dress_code: str | None = None  # 自由記述。Gemini がプリセットへ解釈する。
-    lighting: LightingPreset = LightingPreset.none
+    dress_code: str | None = None  # 自由記述。作成時に Gemini が dress_rules へ読み取る。
+    dress_rules: DressRules | None = None
 
 
 # --------------------------------------------------------------------------- 同意
@@ -208,7 +189,10 @@ class HarmonyReport(BaseModel):
     warnings: list[HarmonyWarning] = Field(default_factory=list)
     formality_median: float | None = None
     evaluated_at: datetime = Field(default_factory=now)
-    explanation: str | None = None  # Gemini の総評（任意）
+    explanation: str | None = None  # 総評。衣装が1人も決まっていない間は None
+    explanation_by: str | None = None  # gemini | stub（Gemini が落ちたときは stub になる）
+    # 総評を作ったときの入力の指紋。同じなら作り直さない（同意の変更などで Gemini を呼ばない）
+    explanation_key: str | None = None
 
     @property
     def is_clear(self) -> bool:
@@ -226,7 +210,6 @@ class PreviewRevision(BaseModel):
     created_at: datetime = Field(default_factory=now)
     reason: str = ""
     engine: str = "local"  # どの合成エンジンで作ったか
-    lighting: LightingPreset = LightingPreset.none
 
 
 class Preview(BaseModel):
@@ -248,25 +231,6 @@ class ArrangeItem(BaseModel):
 class ArrangePlan(BaseModel):
     items: list[ArrangeItem] = Field(default_factory=list)
     reminders: list[str] = Field(default_factory=list)
-    created_at: datetime = Field(default_factory=now)
-
-
-# --------------------------------------------------------------------------- 記念ムービー
-
-
-class Movie(BaseModel):
-    """確定した集合プレビューから作る短い記念ムービー。
-
-    合意形成が終わったことを祝う体験のためのもので、判定や手配には影響しない。
-    生成は重いので自動では作らず、明示的に依頼されたときだけ作る。
-    """
-
-    movie_ref: str
-    content_type: str = "image/gif"
-    seconds: float = 3.0
-    engine: str = "local"  # どの生成エンジンで作ったか
-    has_audio: bool = False
-    source_revision: int = 0  # 元にした集合プレビューのリビジョン
     created_at: datetime = Field(default_factory=now)
 
 
@@ -324,7 +288,6 @@ class Room(BaseModel):
     harmony: HarmonyReport = Field(default_factory=HarmonyReport)
     arrange: ArrangePlan | None = None
     notifications: list[Notification] = Field(default_factory=list)
-    movie: Movie | None = None
     created_at: datetime = Field(default_factory=now)
     updated_at: datetime = Field(default_factory=now)
 
@@ -398,6 +361,8 @@ class AuditAction(str, Enum):
     tryon = "tryon"
     garment_select = "garment_select"
     preview_compose = "preview_compose"
+    # 記念ムービーは廃止したが、監査ログはルーム削除後も残るため、過去の記録を読めるよう値だけ残す。
+    # 新しく記録することはない。
     movie_create = "movie_create"
     harmony_evaluate = "harmony_evaluate"
     arrange = "arrange"

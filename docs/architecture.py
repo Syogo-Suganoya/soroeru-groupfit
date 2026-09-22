@@ -50,7 +50,7 @@ with Diagram(
 
     # LINE は MessagingPort の実装として口だけあるが、MVP では使わないので載せない
     with Cluster("AI", graph_attr=CLUSTER_ATTR):
-        gemini = AIPlatform("Gemini API\n判断・調和提案")
+        gemini = AIPlatform("Gemini API\nドレスコード読み取り・総評")
 
     with Cluster("データ", graph_attr=CLUSTER_ATTR):
         firestore = Firestore("Firestore")

@@ -14,10 +14,9 @@ import io
 import math
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageEnhance, ImageFont
+from PIL import Image, ImageDraw, ImageFont
 
 from app.domain.color import hex_to_rgb, hue_degrees
-from app.domain.models import LightingPreset
 
 CARD_SIZE = (360, 480)
 BACKDROP = (245, 242, 238)
@@ -171,33 +170,6 @@ def render_group_preview(figures: list[dict]) -> bytes:
         if label:
             _text(draw, (x, ground + 48), label, size=14, fill=(140, 136, 132))
 
-    return _to_png(img)
-
-
-# 会場ライティングの近似パラメータ: (被せる色, 被せる強さ, 明度, コントラスト, 彩度)
-_LIGHTING = {
-    LightingPreset.garden_day: ((255, 246, 224), 0.10, 1.10, 1.02, 1.05),
-    LightingPreset.hall_evening: ((255, 198, 128), 0.20, 0.88, 1.10, 0.95),
-    LightingPreset.chapel: ((236, 244, 255), 0.14, 1.14, 0.95, 0.95),
-}
-
-
-def apply_lighting(png: bytes, lighting: LightingPreset) -> bytes:
-    """会場の光環境を近似する。
-
-    色被せと明度・彩度の調整で「らしさ」を出す。
-    物理的な再照明ではないため、当日の見え方の目安として扱う。
-    """
-    params = _LIGHTING.get(lighting)
-    if params is None:
-        return png
-
-    tint, strength, brightness, contrast, saturation = params
-    img = Image.open(io.BytesIO(png)).convert("RGB")
-    img = Image.blend(img, Image.new("RGB", img.size, tint), strength)
-    img = ImageEnhance.Brightness(img).enhance(brightness)
-    img = ImageEnhance.Contrast(img).enhance(contrast)
-    img = ImageEnhance.Color(img).enhance(saturation)
     return _to_png(img)
 
 

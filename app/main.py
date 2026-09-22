@@ -11,7 +11,6 @@ from fastapi import Depends, FastAPI, HTTPException, Response
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.agents.keepsake import KeepsakeAgent
 from app.agents.orchestrator import MemberNotFound, Orchestrator, RoomNotFound
 from app.config import Settings
 from app.deps import Container, get_container
@@ -22,7 +21,6 @@ from app.schemas import (
     CreateRoomRequest,
     FittingView,
     JoinRequest,
-    LightingRequest,
     ReadNotificationsRequest,
     RoomView,
     SelectRequest,
@@ -56,8 +54,6 @@ def _view(room, s: Settings) -> RoomView:
         room,
         base_url=s.public_base_url,
         ttl_days=s.ttl_days_after_event,
-        # 作成可否はルーム状態だけで決まるので、コンテナに触らず判定する
-        movie_availability=KeepsakeAgent.can_create(room),
     )
 
 
@@ -106,7 +102,6 @@ async def create_room(
             title=body.title,
             event_date=body.event_date,
             dress_code=body.dress_code,
-            lighting=body.lighting,
         ),
         organizer_name=body.organizer_name,
     )
@@ -225,46 +220,6 @@ async def preview_png(
     return Response(content=data, media_type="image/png")
 
 
-@app.post("/api/rooms/{room_id}/lighting", response_model=RoomView)
-async def set_lighting(
-    room_id: str,
-    body: LightingRequest,
-    o: Orchestrator = Depends(orchestrator),
-    s: Settings = Depends(settings),
-) -> RoomView:
-    """会場の光環境を設定し、集合プレビューを作り直す。"""
-    room = await o.set_lighting(room_id=room_id, lighting=body.lighting)
-    return _view(room, s)
-
-
-# ------------------------------------------------------------------ 記念ムービー
-
-
-@app.post("/api/rooms/{room_id}/movie", response_model=RoomView)
-async def create_movie(
-    room_id: str,
-    o: Orchestrator = Depends(orchestrator),
-    s: Settings = Depends(settings),
-) -> RoomView:
-    """集合プレビューから記念ムービーを作る。全員確定が前提。"""
-    try:
-        room = await o.create_movie(room_id)
-    except ValueError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
-    return _view(room, s)
-
-
-@app.get("/api/rooms/{room_id}/movie")
-async def get_movie(room_id: str, c: Container = Depends(container)) -> Response:
-    room = await c.orchestrator.get_room(room_id)
-    if room.movie is None:
-        raise HTTPException(status_code=404, detail="記念ムービーはまだありません")
-    data = await c.storage.get(room.movie.movie_ref)
-    if data is None:
-        raise HTTPException(status_code=404, detail="記念ムービーが見つかりません")
-    return Response(content=data, media_type=room.movie.content_type)
-
-
 @app.get("/api/images/{ref:path}")
 async def image(ref: str, c: Container = Depends(container)) -> Response:
     data = await c.storage.get(ref)
@@ -341,6 +296,12 @@ async def sweep(o: Orchestrator = Depends(orchestrator)) -> dict:
 async def index() -> FileResponse:
     """機能と使い方の紹介ページ。招待URLを受け取った人が最初に見る想定。"""
     return FileResponse(WEB_DIR / "index.html")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon() -> FileResponse:
+    """アイコンのリンクを持たないページ（/health や /docs）でもブラウザが取りに来るので返す。"""
+    return FileResponse(WEB_DIR / "favicon-32.png", media_type="image/png")
 
 
 @app.get("/app")
