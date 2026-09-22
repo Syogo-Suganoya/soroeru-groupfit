@@ -1,11 +1,6 @@
 # 開発ガイド
 
-ソロエルの開発手順と実装上の約束ごとをまとめています。プロダクトの概要は [README.md](README.md) を参照してください。
-
-## 前提
-
-**Python はコンテナで実行します。** ホストに venv は作りません。
-ローカル・CI・本番が同じ Dockerfile を参照することで、環境の違いによる不具合を構造的になくしています。
+ソロエルの開発手順と実装上の約束ごとをまとめています。
 
 ## 起動
 
@@ -45,17 +40,26 @@ docker compose run --rm api python -m pytest -q
 
 ## 外部APIの切り替え
 
-外部APIのキーがなくても、すべての機能が動きます。既定はすべて mock です:
+外部APIのキーがなくても、すべての機能が動きます。外部APIは Gemini だけで、既定は mock です:
 
-| 環境変数 | 既定 | 取りうる値 |
+| 環境変数 | 既定 | 説明 |
 |---|---|---|
-| `GEMINI_MODE` | `mock` | `mock` / `live` |
-| `NOTIFY_CHANNEL` | `in_app` | `in_app` / `line` |
-| `DB_DRIVER` | `firestore` | `firestore` / `memory`（memory はテスト用） |
-| `STORAGE_DRIVER` | `local` | `local` / `gcs` |
+| `GEMINI_MODE` | `mock` | `live` にすると Gemini の実APIを使います |
+| `GEMINI_API_KEY` | （空） | `live` のときに必要です |
+| `GEMINI_MODEL` | `gemini-3.7-flash` | 使うモデル |
 
-実キーを使うときは `.env.example` を `.env` にコピーして値を入れ、対応するモードを切り替えます。
-`.env` はコミットしません。本番の秘密情報は Secret Manager から Cloud Run に注入し、イメージには焼き込みません。
+実キーを使うときは `.env.example` を `.env` にコピーして値を入れ、`GEMINI_MODE=live` にします。
+
+次の3つは本番とテストのための切り替えです。ローカル開発では既定のまま使ってください:
+
+| 環境変数 | 既定 | 既定以外の値 |
+|---|---|---|
+| `DB_DRIVER` | `firestore` | `memory` はテスト専用です（`tests/conftest.py` が固定します） |
+| `STORAGE_DRIVER` | `local` | `gcs` は本番用です。`GCS_BUCKET` と GCP の認証が要ります |
+| `NOTIFY_CHANNEL` | `in_app` | `line` は未完成です。宛先にソロエル内部の uid を渡しているため、LINE には届きません |
+
+判定のしきい値と自動削除の日数も環境変数で変えられます（`COLOR_CLASH_DELTA_E`＝12、
+`FORMALITY_GAP_THRESHOLD`＝2、`TTL_DAYS_AFTER_EVENT`＝7）。一覧と既定値は `app/config.py` にあります。
 
 **テストは `.env` の影響を受けません。** `tests/conftest.py` の `build_settings()` がモードを mock に固定しています。
 ここを迂回して `Settings()` を直接作らないでください。手元で `GEMINI_MODE=live` にしている人だけ
