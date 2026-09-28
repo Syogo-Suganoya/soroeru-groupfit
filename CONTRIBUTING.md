@@ -98,6 +98,16 @@ SVG を変えたら書き出し直してください:
 docker compose --profile shots run --rm --no-deps shots docs/icons.js
 ```
 
+提出用のデモ動画（約90秒）も、同じイメージで [`docs/demo.js`](docs/demo.js) が画面を操作して録ります:
+
+```bash
+docker compose --profile shots run --rm shots docs/demo.js
+```
+
+出力は `dist/soroeru-demo.mp4` で、リポジトリには入れません（`.gitignore` 済み）。
+幹事がルームを作るところから、メンバーの参加・試着・かぶりの指摘・代替案での選び直し・幹事の確認までを録ります。
+API やGemini の応答待ちは録画から詰めてあります。総評は起動中の api の `GEMINI_MODE` に従います。
+
 ブラウザと日本語フォントは撮影専用のイメージ（`docs/shots/Dockerfile`）に閉じてあり、api のイメージには入れていません。
 
 ## アーキテクチャ図の再生成

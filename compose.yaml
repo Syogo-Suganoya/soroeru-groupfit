@@ -53,7 +53,7 @@ services:
       - .:/work
 
   # 紹介ページ・README 用の画面の写し（`GEMINI_MODE=mock docker compose --profile shots run --rm shots`）
-  # アイコンの書き出しも同じイメージで行う（`... run --rm shots docs/icons.js`）
+  # アイコンの書き出し（`... run --rm shots docs/icons.js`）とデモ動画（`... docs/demo.js`）も同じイメージで行う
   shots:
     profiles: ["shots"]
     build:

@@ -6,4 +6,5 @@ FROM zenika/alpine-chrome:with-puppeteer
 USER root
 # 日本語のフォントが無いと全部豆腐になる。
 # chromium-lang が無いと --lang=ja-JP が効かず、日付の入力欄が 10/22/2026 の米国式で写る。
-RUN apk add --no-cache font-noto-cjk chromium-lang
+# ffmpeg はデモ動画（docs/demo.js）の録画と mp4 への変換に使う。
+RUN apk add --no-cache font-noto-cjk chromium-lang ffmpeg
