@@ -126,7 +126,7 @@ graphviz と日本語フォントは生成専用のイメージ（`docs/Dockerfi
 | パス | 役割 |
 |---|---|
 | `app/domain/` | 判定ロジック（色差 CIEDE2000・ドレスコード・調和）。LLM に依存しない純関数です |
-| `app/agents/` | ADK 相当のエージェント群。`orchestrator.py` がルームの状態から進行を決めます |
+| `app/agents/` | エージェント群（調和・合成・手配・試着）。`orchestrator.py` がルームの状態から進行を決めます |
 | `app/ports/` | 外部API・永続化の抽象。mock / live はここだけで差し替えます |
 | `app/rendering/` | 試着カード・集合プレビューの描画（Pillow） |
 | `app/main.py` | API Gateway。薄く保ち、進行の判断は Orchestrator に委ねます |

@@ -14,6 +14,7 @@ from diagrams.gcp.compute import Run
 from diagrams.gcp.database import Firestore
 from diagrams.gcp.ml import AIPlatform
 from diagrams.gcp.operations import Logging
+from diagrams.gcp.security import SecretManager
 from diagrams.gcp.storage import GCS
 from diagrams.onprem.client import Users
 
@@ -44,9 +45,9 @@ with Diagram(
 ):
     users = Users("ユーザー\nPWA")
 
+    # サービスは1つ。API とエージェント群（Orchestrator・調和・合成・手配）は同じプロセスで動く
     with Cluster("Cloud Run", graph_attr=CLUSTER_ATTR):
-        api = Run("api\nFastAPI")
-        agent = Run("agent\nADK エージェント")
+        app = Run("soroeru-groupfit\nFastAPI ＋ エージェント")
 
     # LINE は MessagingPort の実装として口だけあるが、MVP では使わないので載せない
     with Cluster("AI", graph_attr=CLUSTER_ATTR):
@@ -57,8 +58,11 @@ with Diagram(
         gcs = GCS("Cloud Storage")
         logging = Logging("Cloud Logging")
 
-    users >> api >> agent
-    agent >> gemini
-    agent >> firestore
-    agent >> gcs
-    agent >> logging
+    secrets = SecretManager("Secret Manager\nGemini API キー")
+
+    users >> app
+    app >> gemini
+    app >> firestore
+    app >> gcs
+    app >> logging
+    secrets >> app
